@@ -4939,7 +4939,8 @@ MonoBehaviour:
   - {fileID: 876929651}
   - {fileID: 434911037}
   - {fileID: 584006600}
-  _mapNameInputField: {fileID: 2055238831}
+  _mapNameInputField: {fileID: 738848815}
+  _mapNameInputFieldText: {fileID: 2055238831}
   _addMapButton: {fileID: 1591133213}
   _dropdown: {fileID: 1755990348}
   _mapPrefab: {fileID: 4598434005546101272, guid: 94b3aa32fcd32b0498ee1057dde2e972, type: 3}
@@ -41168,7 +41169,7 @@ MonoBehaviour:
     m_Right: 10
     m_Top: 10
     m_Bottom: 10
-  m_ChildAlignment: 4
+  m_ChildAlignment: 0
   m_StartCorner: 0
   m_StartAxis: 0
   m_CellSize: {x: 100, y: 30}
