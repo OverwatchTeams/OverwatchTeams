@@ -11,8 +11,8 @@ public struct Player
     public float MonthlyWinRate;                            //월간 승률
     public Dictionary<string, float> AllTimeMapWinRate;     //전체 맵별 승률
     public Dictionary<string, float> MonthlyMapWinRate;     //월간 맵별 승률
-    public Dictionary<RoleType, float> AllTimeRoleWinRate;  //전체 역할군별 승률
-    public Dictionary<RoleType, float> MonthlyRoleWinRate;  //월간 역할군별 승률
+    public Dictionary<Role, float> AllTimeRoleWinRate;  //전체 역할군별 승률
+    public Dictionary<Role, float> MonthlyRoleWinRate;  //월간 역할군별 승률
     public float AllTimeParticipationRate;                  //전체참여율
     public float MonthlyParticipationRate;                  //월간참여율
     public int PlayerScore;                                 //플레이어 점수

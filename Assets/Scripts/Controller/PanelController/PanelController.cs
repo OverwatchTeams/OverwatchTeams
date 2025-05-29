@@ -6,14 +6,21 @@ using UnityEngine.UI;
 public class PanelController : MonoBehaviour
 {
     public GameObject[] panels;
-    [SerializeField] private Button[] _resetButtons;
+    [SerializeField] private Button[] _returnToDefaultButtons;
+    [SerializeField] private Button[] _returnToParentButtons;
     
-    protected virtual void InitializeButtons()
+    protected virtual void InitializeListeners()
     {
         CloseAllPanel();
-        foreach (Button button in _resetButtons)
+        foreach (Button button in _returnToDefaultButtons)
         {
-            button.onClick.AddListener(ReturnToDefaultPanel);
+            button.onClick.RemoveListener(CloseAllPanel);
+            button.onClick.AddListener(CloseAllPanel);
+        }
+        foreach (Button button in _returnToParentButtons)
+        {
+            button.onClick.RemoveListener(ReturnToParentPanel);
+            button.onClick.AddListener(ReturnToParentPanel);
         }
     }
     
@@ -58,7 +65,7 @@ public class PanelController : MonoBehaviour
         }
     }
     
-    public void CloseAllPanel()
+    public void  CloseAllPanel()
     {
         foreach (GameObject panel in panels)
         {
@@ -66,8 +73,15 @@ public class PanelController : MonoBehaviour
         }
     }
 
-    public void ReturnToDefaultPanel()
+    protected virtual void Initialize()
     {
         CloseAllPanel();
     }
+    
+    protected virtual void ReturnToParentPanel()
+    {
+        Initialize();
+        gameObject.SetActive(false);
+    }
+    
 }

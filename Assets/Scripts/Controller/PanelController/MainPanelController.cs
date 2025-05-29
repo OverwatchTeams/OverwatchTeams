@@ -14,18 +14,24 @@ public class MainPanelController : PanelController
 
     private void Start()
     {
-        InitializeButtons();
         Initialize();
     }
 
-    private void Initialize()
+    protected override void Initialize()
     {
-        CloseAllPanel();
+        base.Initialize();
+        InitializeListeners();
     }
 
-    protected override void InitializeButtons()
+    protected override void InitializeListeners()
     {
-        base.InitializeButtons();
+        base.InitializeListeners();
+        _teamMakingButton.onClick.RemoveListener(OnClickTeamMakingButton);
+        _gameResultButton.onClick.RemoveListener(OnClickGameResultButton);
+        _gameRecordButton.onClick.RemoveListener(OnClickGameRecordButton);
+        _exitButton.onClick.RemoveListener(OnClickExitButton);
+        _exitAcceptButton.onClick.RemoveListener(OnClickExitAcceptButton);
+        
         _teamMakingButton.onClick.AddListener(OnClickTeamMakingButton);
         _gameResultButton.onClick.AddListener(OnClickGameResultButton);
         _gameRecordButton.onClick.AddListener(OnClickGameRecordButton);

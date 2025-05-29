@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
@@ -11,13 +12,13 @@ public class LoadingController : PanelController
     public Image progressIcon;
     // ProgressIcon 회전 속도
     public float rotationSpeed = 100f;
-    // Start is called before the first frame update
+
     private void Start()
     {
-        DataManager.instance.OnDataLoaded += ChangeToMainPanel;
+        DataController.instance.OnStartDataLoaded -= ChangeToMainPanel;
+        DataController.instance.OnStartDataLoaded += ChangeToMainPanel;
     }
 
-    // Update is called once per frame
     private void Update()
     {
         // ProgressIcon 회전
