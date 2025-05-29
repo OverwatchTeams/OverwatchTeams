@@ -6,13 +6,14 @@ using UnityEngine;
 public class DataController : MonoBehaviour
 {
     public static DataController instance;
-    public Action OnStartDataLoaded;
+    public Action OnDataLoadEnd;
 
     private MapData[] _maps;
     private MapTypeData[] _maptypes;
 
     public MapData[] Maps => _maps;
     public MapTypeData[] MapTypes => _maptypes;
+    [SerializeField] private LoadingController _loadingController;
 
     private void Awake()
     {
@@ -30,12 +31,18 @@ public class DataController : MonoBehaviour
         StartCoroutine(UpdateData());
     }
 
+    private void StartLoading()
+    {
+        _loadingController.gameObject.SetActive(true);
+    }
+
     private IEnumerator UpdateData()
     {
+        StartLoading();
         //맵 데이터 캐싱
         yield return StartCoroutine(MapDataManager.instance.GetAllData(OnMapLoaded));
         yield return StartCoroutine(MapTypeDataManager.instance.GetAllData(OnMapTypeLoaded));
-        OnStartDataLoaded?.Invoke();
+        OnDataLoadEnd?.Invoke();
     }
 
     private void OnMapLoaded(MapData[] maps)
@@ -50,24 +57,30 @@ public class DataController : MonoBehaviour
 
     public IEnumerator CreateMatch(Action<bool> OnCreated, RefinedMatchData match)
     {
+        StartLoading();
         bool isCreated = false;
         yield return StartCoroutine(MatchDataManager.instance.AddData(success => isCreated = success, match));
         OnCreated?.Invoke(isCreated);
+        OnDataLoadEnd?.Invoke();
     }
 
     public IEnumerator CreateMap(Action<bool> OnCreated, MapData map)
     {
+        StartLoading();
         bool isCreated = false;
         yield return StartCoroutine(MapDataManager.instance.AddData(success => isCreated = success, map));
         yield return StartCoroutine(MapDataManager.instance.GetAllData(OnMapLoaded));
         OnCreated?.Invoke(isCreated);
+        OnDataLoadEnd?.Invoke();
     }
     public IEnumerator CreateMapType(Action<bool> OnCreated, MapTypeData maptype)
     {
+        StartLoading();
         bool isCreated = false;
         yield return StartCoroutine(MapTypeDataManager.instance.AddData(success => isCreated = success, maptype));
         yield return StartCoroutine(MapTypeDataManager.instance.GetAllData(OnMapTypeLoaded));
         OnCreated?.Invoke(isCreated);
+        OnDataLoadEnd?.Invoke();
     }
 
 }

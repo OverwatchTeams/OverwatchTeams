@@ -7,20 +7,27 @@ using UnityEngine.UI;
 
 public class AddMapPanelController : PanelController
 {
-    [SerializeField] private TMP_Text _newMapName;
+    [SerializeField] private TMP_InputField _newMapName;
     [SerializeField] private TMP_Dropdown _mapType;
-
+    
+    [SerializeField] private TMP_Text _errorMessage;
     [SerializeField] private Button _addMapConfirmButton;
     [SerializeField] private Button _addMapConfirmConfirmButton;
+    
+    [SerializeField] private FindMapPanelController _findMapPanelController;
     
     #region initialization
     
     private void OnEnable()
     {
-        Debug.Log("OnEnable");
+        Debug.Log("OnEnable AddMap");
         Initialize();
     }
-    
+
+    public void ReInitialize()
+    {
+        Initialize();
+    }
     protected override void Initialize()
     {
         base.Initialize();
@@ -33,7 +40,8 @@ public class AddMapPanelController : PanelController
     
     private void InitializePanel()
     {
-        _newMapName.text = "";
+        _mapType.ClearOptions();
+        _newMapName.text = string.Empty;
         foreach (var type in DataController.instance.MapTypes)
         {
             string typeName = type.name;
@@ -55,11 +63,6 @@ public class AddMapPanelController : PanelController
     }
     #endregion
     
-    private void OnClickAddMapConfirmButton()
-    {
-        OpenPanel("[Popup] AddMapConfirmMessage");
-    }
-    
     private void OnClickAddMapConfirmConfirmButton()
     {
         MapData newMap = new MapData();
@@ -70,16 +73,38 @@ public class AddMapPanelController : PanelController
         StartCoroutine(DataController.instance.CreateMap(
             result => {
                 if (result)
+                {
+                    _findMapPanelController.ReInitialize();
                     OpenPanel("[Popup] AddMapFinishMessage");
+                }
                 else
                     OpenPanel("[Popup] AddMapFailedMessage");
             }, newMap)
         );
     }
     
+    private void OnClickAddMapConfirmButton()
+    {
+        if (!CheckMapNameSavable())
+        {
+            _errorMessage.text = "맵 이름을 기입해 주세요";
+            OpenPanel("[Popup] AddMapErrorMessage");
+        }
+        else
+        {
+            OpenPanel("[Popup] AddMapConfirmMessage");   
+        }
+    }
+
+    private bool CheckMapNameSavable()
+    {
+        if (string.IsNullOrWhiteSpace(_newMapName.text))
+            return false;
+        return true;
+    }
     
     /// <summary>
-    /// 맵 타입 추가 시
+    /// 맵 타입 추가버튼을 눌렀을 시
     /// </summary>
     /// <param name="value"></param>
     private void OnClickAddTypeButton(int value)
@@ -87,7 +112,10 @@ public class AddMapPanelController : PanelController
         if (value == _mapType.options.Count - 1)
         {
             OpenPanel("[Popup] AddMapType", false);
+            _mapType.value = 0;
         }
     }
+    
+    
 
 }

@@ -23,6 +23,7 @@ public class MapTypeDataManager : DataManager<MapTypeData>
     #region AddData
     protected override IEnumerator AddDataCoroutine(Action<bool> OnCompleted, MapTypeData data, string requestUrl)
     {
+        Debug.Log($"name : {data.name}, index : {data.index}");
         return base.AddDataCoroutine(OnCompleted, data, url + "CreateMapType");
     }
     #endregion

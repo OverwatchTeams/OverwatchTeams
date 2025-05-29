@@ -75,5 +75,5 @@ public class MapTypeData
     public string _id;
     public int index;
     public string name;
-    public bool isAtkDefType;
+    public bool isAtkDef;
 }

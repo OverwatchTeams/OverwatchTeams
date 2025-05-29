@@ -31,6 +31,10 @@ public class FindMapPanelController : PanelController
         Initialize();
     }
 
+    public void ReInitialize()
+    {
+        Initialize();
+    }
 
     protected override void Initialize()
     {
