@@ -52,6 +52,7 @@ public class FindMapPanelController : PanelController
         for (int i = 0; i < DataController.instance.Maps.Length; i++)
         {
             GameObject go = Instantiate(_mapPrefab, _mapContainer.transform, false);
+            go.GetComponent<MapButtonPrefab>().SetMapData(DataController.instance.Maps[i]);
             go.GetComponentInChildren<TMP_Text>().text = DataController.instance.Maps[i].name;
             _mapButtons.Add(go);
         }
@@ -66,6 +67,9 @@ public class FindMapPanelController : PanelController
         }
         _addMapButton.onClick.RemoveListener(OnClickAddMap);
         _addMapButton.onClick.AddListener(OnClickAddMap);
+        
+        _dropdown.onValueChanged.RemoveListener(OnDropdownValueChanged);
+        _dropdown.onValueChanged.AddListener(OnDropdownValueChanged);
     }
     
     private void InitializePanel()
@@ -76,8 +80,38 @@ public class FindMapPanelController : PanelController
         {
             Destroy(child.gameObject);
         }
+        
+        _dropdown.ClearOptions();
+        _dropdown.options.Add(new TMP_Dropdown.OptionData("전체"));
+        foreach (var type in DataController.instance.MapTypes)
+        {
+            string typeName = type.name;
+            _dropdown.options.Add(new TMP_Dropdown.OptionData(typeName));
+        }
     }
     #endregion
+
+    private void OnDropdownValueChanged(int value)
+    {
+        if (_dropdown.options[value].text == "전체")
+        {
+            foreach (var mapButton in _mapButtons)
+            {
+                mapButton.SetActive(true);
+            }
+        }
+        foreach (var mapButton in _mapButtons)
+        {
+            if (mapButton.GetComponent<MapButtonPrefab>().MapData.type == _dropdown.options[value].text)
+            {
+                mapButton.SetActive(true);
+            }
+            else
+            {
+                mapButton.SetActive(false);
+            }
+        }
+    }
 
     #region 업데이트
     void Update()

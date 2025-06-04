@@ -10,9 +10,11 @@ public class DataController : MonoBehaviour
 
     private MapData[] _maps;
     private MapTypeData[] _maptypes;
+    private PlayerData[] _players;
 
     public MapData[] Maps => _maps;
     public MapTypeData[] MapTypes => _maptypes;
+    public PlayerData[] Players => _players;
     [SerializeField] private LoadingController _loadingController;
 
     private void Awake()
@@ -42,6 +44,7 @@ public class DataController : MonoBehaviour
         //맵 데이터 캐싱
         yield return StartCoroutine(MapDataManager.instance.GetAllData(OnMapLoaded));
         yield return StartCoroutine(MapTypeDataManager.instance.GetAllData(OnMapTypeLoaded));
+        yield return StartCoroutine(PlayerDataManager.instance.GetAllData(OnPlayerLoaded));
         OnDataLoadEnd?.Invoke();
     }
 
@@ -53,6 +56,11 @@ public class DataController : MonoBehaviour
     private void OnMapTypeLoaded(MapTypeData[] maptypes)
     {
         _maptypes = maptypes;
+    }
+
+    private void OnPlayerLoaded(PlayerData[] players)
+    {
+        _players = players;
     }
 
     public IEnumerator CreateMatch(Action<bool> OnCreated, RefinedMatchData match)
@@ -73,6 +81,16 @@ public class DataController : MonoBehaviour
         OnCreated?.Invoke(isCreated);
         OnDataLoadEnd?.Invoke();
     }
+    public IEnumerator CreatePlayer(Action<bool> OnCreated, PlayerData player)
+    {
+        StartLoading();
+        bool isCreated = false;
+        yield return StartCoroutine(PlayerDataManager.instance.AddData(success => isCreated = success, player));
+        yield return StartCoroutine(PlayerDataManager.instance.GetAllData(OnPlayerLoaded));
+        OnCreated?.Invoke(isCreated);
+        OnDataLoadEnd?.Invoke();
+    }
+    
     public IEnumerator CreateMapType(Action<bool> OnCreated, MapTypeData maptype)
     {
         StartLoading();

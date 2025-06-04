@@ -33,8 +33,9 @@ public class MatchDataManager : DataManager<MatchData>
     
     protected IEnumerator AddDataCoroutine(Action<bool> OnCompleted, MatchData[] data, string requestUrl)
     {
-        requestUrl += "CreateMatch";
+        requestUrl = url + "CreateMatch";
         string json = JsonConvert.SerializeObject(data);
+        Debug.Log("Serialized JSON Data: " + json);
         byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
 
         using (UnityWebRequest request = new UnityWebRequest(requestUrl, "POST"))
@@ -194,7 +195,8 @@ public class MatchDataManager : DataManager<MatchData>
         // 최종 RefinedMatchData 구성
         return new RefinedMatchData
         {
-            date = Convert.ToDateTime(matchGroup.First().date.ToString("yyyy-MM-dd")),
+            beginIndex = matchGroup.Last().index + 1,
+            date = Convert.ToDateTime(matchGroup.First().date),
             round = matchGroup.First().round,
             map = matchGroup.First().map,
             players = blueTeam.Select(p => (p.player, p.role))
@@ -255,18 +257,28 @@ public class MatchDataManager : DataManager<MatchData>
         }
 
         // atkdef 설정
-        AtkDefType blueAtkdef, redAtkdef;
-        if (refined.winner == WinnerTeam.무승부)
+        AtkDefType blueAtkdef = AtkDefType.중립;
+        AtkDefType redAtkdef = AtkDefType.중립;
+        
+        foreach (var map in DataController.instance.Maps)
         {
-            blueAtkdef = AtkDefType.중립;
-            redAtkdef = AtkDefType.중립;
+            if (map.name != refined.map) continue;
+            foreach (var maptype in DataController.instance.MapTypes)
+            {
+                if (maptype.name != map.type) continue;
+                if (maptype.isAtkDef)
+                {
+                    blueAtkdef = AtkDefType.후공;
+                    redAtkdef = AtkDefType.선공;
+                }
+                else
+                {
+                    blueAtkdef = AtkDefType.중립;
+                    redAtkdef = AtkDefType.중립;
+                }
+            }
         }
-        else
-        {
-            blueAtkdef = AtkDefType.후공;
-            redAtkdef = AtkDefType.선공;
-        }
-
+        
         List<MatchData> result = new List<MatchData>();
         int indexCounter = 0;
 
@@ -274,32 +286,32 @@ public class MatchDataManager : DataManager<MatchData>
         {
             result.Add(new MatchData
             {
-                index = indexCounter++,
-                date = refined.date,
+                index = refined.beginIndex + indexCounter,
+                date = refined.date.ToString("yyyy-MM-ddT00:00:00.000Z"),
                 round = refined.round,
                 map = refined.map,
                 role = player.Item2,
                 player = player.Item1,
                 atkdef = blueAtkdef,
                 winlose = blueWinlose,
-                _id = "" // 신규 생성된 경우 빈 문자열 또는 null
             });
+            indexCounter++;
         }
 
         foreach (var player in redPlayers)
         {
             result.Add(new MatchData
             {
-                index = indexCounter++,
-                date = refined.date,
+                index = refined.beginIndex + indexCounter,
+                date = refined.date.ToString("yyyy-MM-ddThh:mm:ssZ"),
                 round = refined.round,
                 map = refined.map,
                 role = player.Item2,
                 player = player.Item1,
                 atkdef = redAtkdef,
                 winlose = redWinlose,
-                _id = ""
             });
+            indexCounter++;
         }
 
         return result.ToArray();

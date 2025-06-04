@@ -146,6 +146,7 @@ GameObject:
   - component: {fileID: 3160797884145967524}
   - component: {fileID: 6240969108671473056}
   - component: {fileID: 37251336483185053}
+  - component: {fileID: 3702096845313298029}
   m_Layer: 5
   m_Name: '[Button] MapName'
   m_TagString: Untagged
@@ -221,7 +222,7 @@ MonoBehaviour:
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
   m_Interactable: 1
-  m_TargetGraphic: {fileID: 0}
+  m_TargetGraphic: {fileID: 37251336483185053}
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
@@ -252,3 +253,15 @@ MonoBehaviour:
     y: 0
     width: 1
     height: 1
+--- !u!114 &3702096845313298029
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4598434005546101272}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2497db2b667725e4c87f8d493df48a9a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

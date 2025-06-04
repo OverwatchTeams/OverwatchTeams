@@ -17,13 +17,18 @@ public class GameResultPanelController : PanelController
     [SerializeField] private Button _confirmCreateMatchButton;
     [SerializeField] private TMP_Text _errorText;
     
+    [SerializeField] private FindPlayerPanelController _findPlayerPanelController;
     [SerializeField] private FindMapPanelController _findMapPanelController;
     private MatchData _latestMatchData;
+    private Button _tempClickedPlayerButton;
     private int currentCycle;
+    private int beginIndex;
 
     #region Initialization
     private void OnEnable()
     {
+        _findPlayerPanelController.OnPlayerClicked -= ChangePlayer;
+        _findPlayerPanelController.OnPlayerClicked += ChangePlayer;
         _findMapPanelController.OnMapClicked -= ChangeMap;
         _findMapPanelController.OnMapClicked += ChangeMap;
         StartCoroutine(MatchDataManager.instance.GetLastMatch(result => 
@@ -32,6 +37,7 @@ public class GameResultPanelController : PanelController
             {
                 _latestMatchData = result;
                 currentCycle = result.round + 1;
+                beginIndex = result.index + 1;
                 _round.text = currentCycle.ToString() + " 번째 사이클";
             }
         }));
@@ -73,8 +79,8 @@ public class GameResultPanelController : PanelController
         base.InitializeListeners();
         foreach (var button in _playerButtons)
         {
-            button.onClick.RemoveListener(PopupFindPlayerTab);
-            button.onClick.AddListener(PopupFindPlayerTab);
+            button.onClick.RemoveListener(delegate { PopupFindPlayerTab(button); });
+            button.onClick.AddListener(delegate { PopupFindPlayerTab(button); });
         }
 
         foreach (var button in _teamCrownButtons)
@@ -87,12 +93,20 @@ public class GameResultPanelController : PanelController
         _finishButton.onClick.RemoveListener(PopupFinish);
         _mapButton.onClick.AddListener(PopupFindMapTab);
         _finishButton.onClick.AddListener(PopupFinish);
+        _confirmCreateMatchButton.onClick.RemoveListener(CreateMatch);
+        _confirmCreateMatchButton.onClick.AddListener(CreateMatch);
     }
     #endregion
 
     private void ChangeMap(string mapName)
     {
         _mapButton.GetComponentInChildren<TMP_Text>().text = mapName;
+        CloseAllPanel();
+    }
+    
+    private void ChangePlayer(string playerName)
+    {
+        _tempClickedPlayerButton.GetComponentInChildren<TMP_Text>().text = playerName;
         CloseAllPanel();
     }
 
@@ -128,9 +142,9 @@ public class GameResultPanelController : PanelController
 
         WinnerTeam winnerTeam;
         winnerTeam = GetWinner();
-
         return new RefinedMatchData
         {
+            beginIndex = beginIndex,
             date = Convert.ToDateTime(_date.text),
             round = currentCycle,
             map = _mapButton.GetComponentInChildren<TMP_Text>().text,
@@ -161,9 +175,11 @@ public class GameResultPanelController : PanelController
     }
     
     
-    private void PopupFindPlayerTab()
+    private void PopupFindPlayerTab(Button button)
     {
+        _tempClickedPlayerButton = button;
         OpenPanel("[Popup] FindPlayer");
+        _findPlayerPanelController.FilterSelectedPlayer(_playerButtons);
     }
 
     private void PopupFindMapTab()
@@ -219,9 +235,9 @@ public class GameResultPanelController : PanelController
         StartCoroutine(DataController.instance.CreateMatch(result =>
         {
             if (result)
-                OpenPanel("[Popup] AddMapFinishMessage");
+                OpenPanel("[Popup] AddMatchFinishMessage");
             else
-                OpenPanel("[Popup] AddMapFailedMessage");
+                OpenPanel("[Popup] AddMatchFailedMessage");
         }, data));
     }
 

@@ -37,9 +37,8 @@ public enum WinnerTeam
 [System.Serializable]
 public class MatchData
 {
-    public string _id;
     public int index;
-    public DateTime date;
+    public string date;
     public int round;
     public string map;
     [JsonConverter(typeof(StringEnumConverter))]
@@ -53,6 +52,7 @@ public class MatchData
 
 public class RefinedMatchData
 {
+    public int beginIndex;
     public DateTime date;
     public int round;
     public string map;
@@ -76,4 +76,19 @@ public class MapTypeData
     public int index;
     public string name;
     public bool isAtkDef;
+}
+
+[Serializable]
+public class PlayerData
+{
+    public string player;
+    public Scores scores;
+
+    [Serializable]
+    public class Scores
+    {
+        public int D = 0;
+        public int T = 0;
+        public int H = 0;
+    }
 }
