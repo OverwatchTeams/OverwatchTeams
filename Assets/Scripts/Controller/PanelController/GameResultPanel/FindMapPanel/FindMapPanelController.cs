@@ -100,16 +100,19 @@ public class FindMapPanelController : PanelController
                 mapButton.SetActive(true);
             }
         }
-        foreach (var mapButton in _mapButtons)
+        else
         {
-            if (mapButton.GetComponent<MapButtonPrefab>().MapData.type == _dropdown.options[value].text)
+            foreach (var mapButton in _mapButtons)
             {
-                mapButton.SetActive(true);
-            }
-            else
-            {
-                mapButton.SetActive(false);
-            }
+                if (mapButton.GetComponent<MapButtonPrefab>().MapData.type == _dropdown.options[value].text)
+                {
+                    mapButton.SetActive(true);
+                }
+                else
+                {
+                    mapButton.SetActive(false);
+                }
+            }   
         }
     }
 

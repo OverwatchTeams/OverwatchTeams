@@ -92,3 +92,26 @@ public class PlayerData
         public int H = 0;
     }
 }
+
+[Serializable]
+public class TotalGameData
+{
+    
+}
+[Serializable]
+public class FilteredGameData
+{
+    
+}
+
+[Serializable]
+public class TotalLeaderBoardData
+{
+    
+}
+
+[Serializable]
+public class FilteredLeaderBoardData
+{
+    
+}

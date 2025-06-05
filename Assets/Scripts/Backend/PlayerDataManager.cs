@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
 
 public class PlayerDataManager : DataManager<PlayerData>
 {
@@ -42,6 +43,34 @@ public class PlayerDataManager : DataManager<PlayerData>
         return base.GetAllDataCoroutine(OnCompleted, url + "GetAllPlayersSortedByRecent");
     }
     #endregion
-    
+    #endregion
+    #region UpdatePlayerDocument
+    public IEnumerator UpdatePlayerDocuments(Action<bool> OnCompleted)
+    {
+        yield return StartCoroutine(UpdatePlayerDocumentsCoroutine(OnCompleted));
+    }
+   
+    protected virtual IEnumerator UpdatePlayerDocumentsCoroutine(Action<bool> OnCompleted)
+    {
+        string requestUrl = url + "UpdatePlayerDocuments";
+        using (UnityWebRequest request = new UnityWebRequest(requestUrl, "POST"))
+        {
+            // DownloadHandler 추가
+            request.downloadHandler = new DownloadHandlerBuffer();
+            
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                Debug.Log("PlayerDocuments 업데이트 성공: " + request.downloadHandler.text);
+                OnCompleted?.Invoke(true);
+            }
+            else
+            {
+                Debug.LogError("PlayerDocuments 업데이트 실패: " + request.error);
+                OnCompleted?.Invoke(false);
+            }
+        }
+    }
     #endregion
 }

@@ -12,18 +12,27 @@ public class LoadingController : PanelController
     // 현재 ProgressIcon이 회전 중인지 회전 여부 확인
     private bool isSpinning = true;
     [SerializeField] private Image progressIcon;
-    [SerializeField] private TMP_Text progressText;
+    [SerializeField] private TMP_Text loadingText;
+    [SerializeField] private TMP_Text miniLoadingText;
     // ProgressIcon 회전 속도
     public float rotationSpeed = 100f;
+    [SerializeField] private GameObject _loadingPanel;
+    [SerializeField] private GameObject _miniLoadingPanel;
+    [SerializeField] private GameObject _warningPanel;
+    [SerializeField] private Button[] _confirmButton;
+    
 
     private void Start()
     {
         DataController.instance.OnDataLoadEnd -= DeactivateLoadingPanel;
         DataController.instance.OnDataLoadEnd += DeactivateLoadingPanel;
+        DataController.instance.OnDataUpdateEnd -= DeactivateMiniLoadingPanel;
+        DataController.instance.OnDataUpdateEnd += DeactivateMiniLoadingPanel;
     }
 
     private void OnEnable()
     {
+        InitializeListener();
         ActivateLoadingPanel();
     }
 
@@ -36,15 +45,53 @@ public class LoadingController : PanelController
         }
     }
 
-    private void ActivateLoadingPanel()
+    private void InitializeListener()
     {
+        foreach (var button in _confirmButton)
+        {
+            button.onClick.RemoveListener(DeactivateWarningPopupPanel);
+            button.onClick.AddListener(DeactivateWarningPopupPanel);
+        }
+    }
+
+    public void SetLoadingMessage(string message)
+    {
+        loadingText.text = message;
+    }
+
+    public void SetMiniLoaingMessage(string message)
+    {
+        miniLoadingText.text = message;
+    }
+    public void ActivateLoadingPanel()
+    {
+        _loadingPanel.SetActive(true);
         StartSpinner();
     }
     private void DeactivateLoadingPanel()
     {
         // 회전 멈추기
         StopSpinner();
-        this.gameObject.SetActive(false);
+        _loadingPanel.SetActive(false);
+    }
+
+    public void ActivateMiniLoadingPanel()
+    {
+        _miniLoadingPanel.SetActive(true);
+    }
+    public void DeactivateMiniLoadingPanel()
+    {
+        _miniLoadingPanel.SetActive(false);
+    }
+    
+    public void ActivateWarningPopupPanel()
+    {
+        _warningPanel.SetActive(true);
+    }
+    
+    private void DeactivateWarningPopupPanel()
+    {
+        _warningPanel.SetActive(false);
     }
     
     private void StopSpinner()
@@ -54,11 +101,6 @@ public class LoadingController : PanelController
     private void StartSpinner()
     {
         isSpinning = true;
-    }
-
-    public void ChangeDescription(string description)
-    {
-        
     }
     
     
