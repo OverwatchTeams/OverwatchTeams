@@ -154,25 +154,18 @@ public class MainDataManager : MonoBehaviour
            }
        }
    }
-   #endregion
    
-   #region GetGameDatas
-   
-   public IEnumerator GetLeaderBoardByYear(Action<FilteredLeaderBoardData> OnCompleted)
+   public IEnumerator GetDropDownDates(Action<RecordDropdownDate> OnCompleted)
    {
-       yield return StartCoroutine(GetLeaderBoardByYearCoroutine(OnCompleted));
+       yield return StartCoroutine(GetDropDownDatesCoroutine(OnCompleted));
    }
    
-   public IEnumerator GetLeaderBoardByMonth(Action<FilteredLeaderBoardData> OnCompleted)
+   private IEnumerator GetDropDownDatesCoroutine(Action<RecordDropdownDate> OnCompleted)
    {
-       yield return StartCoroutine(GetLeaderBoardByMonthCoroutine(OnCompleted));
-   }
-   private IEnumerator GetLeaderBoardByYearCoroutine(Action<FilteredLeaderBoardData> OnCompleted)
-   {
-       string requestUrl = url + "GetLeaderBoardByYear";
+       string requestUrl = url + "GetDropDownDates";
        if (string.IsNullOrEmpty(requestUrl))
        {
-           Debug.LogError("GetLeaderBoardByYear 요청 URL이 null이거나 비어있습니다.");
+           Debug.LogError("GetDropDownDates 요청 URL이 null이거나 비어있습니다.");
            OnCompleted?.Invoke(null);
            yield break;
        }
@@ -184,7 +177,7 @@ public class MainDataManager : MonoBehaviour
            if (www.result == UnityWebRequest.Result.Success)
            {
                string json = www.downloadHandler.text;
-               FilteredLeaderBoardData result = JsonConvert.DeserializeObject<FilteredLeaderBoardData>(json);
+               RecordDropdownDate result = JsonConvert.DeserializeObject<RecordDropdownDate>(json);
                Debug.Log($"데이터 조회 성공");
                OnCompleted?.Invoke(result);
            }
@@ -196,12 +189,32 @@ public class MainDataManager : MonoBehaviour
        }
    }
    
-   private IEnumerator GetLeaderBoardByMonthCoroutine(Action<FilteredLeaderBoardData> OnCompleted)
+   
+   #endregion
+   
+   #region GetGameDatas
+   
+   public IEnumerator GetLeaderBoard(Action<WinRateData> OnCompleted, string yearOrMonth, string date)
    {
-       string requestUrl = url + "GetLeaderBoardByMonth";
+       yield return StartCoroutine(GetLeaderBoardCoroutine(OnCompleted, yearOrMonth, date));
+   }
+
+   private IEnumerator GetLeaderBoardCoroutine(Action<WinRateData> OnCompleted, string yearOrMonth, string date)
+   {
+       string requestUrl = null;
+       switch (yearOrMonth)
+       {
+            case "year":
+                requestUrl = url + "GetMainLeaderBoardByYear?year=" + date;
+                break;
+            case "month":
+                requestUrl = url + "GetMainLeaderBoardByMonth?month=" + date;
+                break;
+       }
+       
        if (string.IsNullOrEmpty(requestUrl))
        {
-           Debug.LogError("GetLeaderBoardByMonth 요청 URL이 null이거나 비어있습니다.");
+           Debug.LogError("GetLeaderBoard 요청 URL이 null이거나 비어있습니다.");
            OnCompleted?.Invoke(null);
            yield break;
        }
@@ -213,13 +226,13 @@ public class MainDataManager : MonoBehaviour
            if (www.result == UnityWebRequest.Result.Success)
            {
                string json = www.downloadHandler.text;
-               FilteredLeaderBoardData result = JsonConvert.DeserializeObject<FilteredLeaderBoardData>(json);
-               Debug.Log($"데이터 조회 성공");
+               WinRateData result = JsonConvert.DeserializeObject<WinRateData>(json);
+               Debug.Log($"{date} 랭크 데이터 조회 성공");
                OnCompleted?.Invoke(result);
            }
            else
            {
-               Debug.LogError($"데이터 전체 조회 실패: {www.responseCode} - {www.error}");
+               Debug.LogError($"{date} 랭크 데이터 조회 실패: {www.responseCode} - {www.error}");
                OnCompleted?.Invoke(null);
            }
        }

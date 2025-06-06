@@ -111,7 +111,8 @@ public class TotalLeaderBoardData
 }
 
 [Serializable]
-public class FilteredLeaderBoardData
+public class RecordDropdownDate
 {
-    
+    public List<string> year;
+    public List<string> month;
 }

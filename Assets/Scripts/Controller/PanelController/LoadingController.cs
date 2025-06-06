@@ -14,6 +14,7 @@ public class LoadingController : PanelController
     [SerializeField] private Image progressIcon;
     [SerializeField] private TMP_Text loadingText;
     [SerializeField] private TMP_Text miniLoadingText;
+    [SerializeField] private Image background;
     // ProgressIcon 회전 속도
     public float rotationSpeed = 100f;
     [SerializeField] private GameObject _loadingPanel;
@@ -54,6 +55,21 @@ public class LoadingController : PanelController
         }
     }
 
+    public void SetLoadingPanelOpaque(bool isOpaque)
+    {
+        if (!isOpaque)
+        {
+            Color color = background.color;
+            color.a = 0f;
+            background.color = color;
+        }
+        else
+        {
+            Color color = background.color;
+            color.a = 1f;
+            background.color = color;
+        }
+    }
     public void SetLoadingMessage(string message)
     {
         loadingText.text = message;
