@@ -94,23 +94,6 @@ public class PlayerData
 }
 
 [Serializable]
-public class TotalGameData
-{
-    
-}
-[Serializable]
-public class FilteredGameData
-{
-    
-}
-
-[Serializable]
-public class TotalLeaderBoardData
-{
-    
-}
-
-[Serializable]
 public class RecordDropdownDate
 {
     public List<string> year;

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class DataController : MonoBehaviour
@@ -14,12 +15,15 @@ public class DataController : MonoBehaviour
     private PlayerData[] _players;
     private RecordDropdownDate _recordDropdownDates;
     private WinRateData _winRateData;
+    private GameDatas _gameDatas;
 
     public MapData[] Maps => _maps;
     public MapTypeData[] MapTypes => _maptypes;
     public PlayerData[] Players => _players;
     public RecordDropdownDate RecordDropdownDates => _recordDropdownDates;
     public WinRateData WinRateData => _winRateData;
+    public GameDatas GameDatas => _gameDatas;
+    
     [SerializeField] private LoadingController _loadingController;
     private bool _isLoading = false;
 
@@ -60,6 +64,15 @@ public class DataController : MonoBehaviour
         yield return StartCoroutine(MapDataManager.instance.GetAllData(OnMapLoaded));
         _loadingController.SetLoadingMessage("맵 타입 정보를 불러오는 중입니다....");
         yield return StartCoroutine(MapTypeDataManager.instance.GetAllData(OnMapTypeLoaded));
+        OnDataLoadEnd?.Invoke();
+        _isLoading = false;
+    }
+    public IEnumerator EditPlayerData()
+    {
+        StartLoading();
+        //편집하는 로직
+        _loadingController.SetLoadingMessage("플레이어 정보를 업데이트하는 중입니다....");
+        yield return StartCoroutine(PlayerDataManager.instance.GetAllData(OnPlayerLoaded));
         OnDataLoadEnd?.Invoke();
         _isLoading = false;
     }
@@ -114,6 +127,10 @@ public class DataController : MonoBehaviour
     private void OnLeaderBoardLoaded(WinRateData winRateData)
     {
         _winRateData = winRateData;
+    }
+    private void OnGameDatasLoaded(GameDatas gameDatas)
+    {
+        _gameDatas = gameDatas;
     }
     
     private void OnDropdownDatesLoaded(RecordDropdownDate dropdownDates)
@@ -177,7 +194,7 @@ public class DataController : MonoBehaviour
             yield break;
         }
         StartLoading();
-        _loadingController.SetLoadingMessage("플레이어를 추가하는 중입니다....");
+        _loadingController.SetLoadingMessage("플레이어 정보를 저장하는 중입니다....");
         yield return StartCoroutine(PlayerDataManager.instance.AddData(success => isCreated = success, player));
         yield return StartCoroutine(PlayerDataManager.instance.GetAllData(OnPlayerLoaded));
         _isLoading = false;
@@ -231,6 +248,22 @@ public class DataController : MonoBehaviour
         _loadingController.SetLoadingPanelOpaque(false);
         _loadingController.SetLoadingMessage("");
         yield return StartCoroutine(MainDataManager.instance.GetLeaderBoard(OnLeaderBoardLoaded, yearOrMonth, date));
+        _isLoading = false;
+        _loadingController.SetLoadingPanelOpaque(false);
+        OnDataLoadEnd?.Invoke();
+    }
+    
+    public IEnumerator GetMainGameDatas(string yearOrMonth, string date)
+    {
+        if (_isLoading || (yearOrMonth != "year" && yearOrMonth != "month"))
+        {
+            _loadingController.ActivateWarningPopupPanel();
+            yield break;
+        } 
+        StartLoading();
+        _loadingController.SetLoadingPanelOpaque(false);
+        _loadingController.SetLoadingMessage("");
+        yield return StartCoroutine(MainDataManager.instance.GetGameDatas(OnGameDatasLoaded, yearOrMonth, date));
         _isLoading = false;
         _loadingController.SetLoadingPanelOpaque(false);
         OnDataLoadEnd?.Invoke();

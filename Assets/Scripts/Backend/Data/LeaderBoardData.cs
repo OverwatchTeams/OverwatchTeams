@@ -39,9 +39,9 @@ public class PlayerWinRate
 [Serializable]
 public class RoleWinRate
 {
-    public SimpleWinRate D; // 역할 D
-    public SimpleWinRate T; // 역할 T
-    public SimpleWinRate H; // 역할 H
+    public Dictionary<string, MapWinRate> D; // 역할 D
+    public Dictionary<string, MapWinRate> T; // 역할 T
+    public Dictionary<string, MapWinRate> H; // 역할 H
 }
 
 [Serializable]

@@ -28,14 +28,23 @@ public class PanelController : MonoBehaviour
     /// 지정한 이름의 패널만 활성화하고, 나머지 패널은 비활성화하는 함수
     /// </summary>
     /// <param name="panelName"></param>
-    public void OpenPanel(string panelName, bool closeOthers = true)
+    public GameObject OpenPanel(string panelName, bool closeOthers = true)
     {
+        GameObject resultPanel = null;
         foreach (GameObject panel in panels)
         {
             if (closeOthers == true)
             {
                 // 이름이 일치하는 패널만 활성화 (나머지는 비활성화)
-                panel.SetActive(panel.name == panelName);
+                if (panel.name == panelName)
+                {
+                    panel.SetActive(true);
+                    resultPanel = panel;
+                }
+                else
+                {
+                    panel.SetActive(false);
+                }
             }
             //다른패널은 종료하지 않고, 프로퍼티로 받은 패널 활성화
             else
@@ -43,9 +52,11 @@ public class PanelController : MonoBehaviour
                 if (panel.name == panelName)
                 {
                     panel.SetActive(true);
+                    resultPanel = panel;
                 }
             }
         }
+        return resultPanel;
     }
 
     /// <summary>
