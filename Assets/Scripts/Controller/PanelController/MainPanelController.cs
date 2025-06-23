@@ -54,7 +54,7 @@ public class MainPanelController : PanelController
     
     private void OnClickExitButton()
     {
-        OpenPanel("[Popup] FinishCheck");
+        OpenPanel("[PopupPanel] QuitMessagePopup");
     }
 
     private void OnClickExitAcceptButton()

@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Newtonsoft.Json;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -38,12 +40,19 @@ public class PlayerDataManager : DataManager<PlayerData>
     
     #region GetAllData
 
-    protected override IEnumerator GetAllDataCoroutine(Action<PlayerData[]> OnCompleted, string requestUrl)
+    public IEnumerator GetAllPlayers(Action<bool> OnCompleted, Action<PlayerData[]> OnCompletedDatas, PlayerURLData playerURLData)
     {
-        return base.GetAllDataCoroutine(OnCompleted, url + "GetAllPlayersSortedByRecent");
+        string detailUrl = "GetAllPlayers";
+        detailUrl += "?ClanMember=" + playerURLData.isClanMember;
+        detailUrl += "&Fields=" + string.Join(",", playerURLData.fields);
+        detailUrl += "&Sort=" + playerURLData.sortType;
+        Debug.Log(detailUrl);
+        return base.GetAllDataCoroutine(OnCompleted, OnCompletedDatas, url + detailUrl);
     }
+    
     #endregion
     #endregion
+    
     #region UpdatePlayerDocument
     public IEnumerator UpdatePlayerDocuments(Action<bool> OnCompleted)
     {

@@ -82,14 +82,85 @@ public class MapTypeData
 public class PlayerData
 {
     public string player;
+    public Date dates;
+    public bool isClanMember;
     public Scores scores;
+    public List<string> subNames;
+    public WinRate winRates;
+    public Dictionary<string, PositionSet> synergy;
 
+    [Serializable]
+    public class Date
+    {
+        public DateTime first;
+        public DateTime last;
+        public int lastRound;
+    }
+    
     [Serializable]
     public class Scores
     {
         public int D = 0;
         public int T = 0;
         public int H = 0;
+    }
+    
+    [Serializable]
+    public class WinRate
+    {
+        public Dictionary<string, WinRateDetail> byYear;
+        public Dictionary<string, WinRateDetail> byMonth;
+
+        [Serializable]
+        public class WinRateDetail
+        {
+            public GameDetail total;
+            public Dictionary<string, GameDetail> map;
+            public RoleGame role;
+
+            public class GameDetail
+            {
+                public int playedGames;
+                public int requiredGames;
+                public int wins;
+                public int draws;
+                public int rate;
+            }
+
+            public class RoleGame
+            {
+                public GameDetail D;
+                public GameDetail T;
+                public GameDetail H;
+            }
+        }
+    }
+
+    [Serializable]
+    public class PositionSet
+    {
+        [JsonProperty("D-D")] public Team D_D;
+        [JsonProperty("D-T")] public Team D_T;
+        [JsonProperty("D-H")] public Team D_H;
+        [JsonProperty("T-D")] public Team T_D;
+        [JsonProperty("T-H")] public Team T_H;
+        [JsonProperty("T-T")] public Team T_T;
+        [JsonProperty("H-D")] public Team H_D;
+        [JsonProperty("H-T")] public Team H_T;
+        [JsonProperty("H-H")] public Team H_H;
+        
+
+        public class Team
+        {
+            public TeamDetail sameTeam;
+            public TeamDetail oppositeTeam;
+
+            public class TeamDetail
+            {
+                public int games;
+                public int wins;
+            }
+        }
     }
 }
 
@@ -98,4 +169,11 @@ public class RecordDropdownDate
 {
     public List<string> year;
     public List<string> month;
+}
+
+public class PlayerURLData
+{
+    public string isClanMember;
+    public List<string> fields;
+    public string sortType;
 }

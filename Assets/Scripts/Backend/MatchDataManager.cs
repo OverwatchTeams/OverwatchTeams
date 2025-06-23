@@ -338,7 +338,7 @@ public class MatchDataManager : DataManager<MatchData>
     /// <summary>
     /// 사용하지 않는 함수입니다.
     /// </summary>
-    public override IEnumerator GetAllData(Action<MatchData[]> OnCompleted)
+    public override IEnumerator GetAllData(Action<bool> OnCompleted, Action<MatchData[]> OnCompletedDatas)
     {
         throw new System.NotImplementedException("이 클래스에서 사용할 수 없는 함수 입니다."); 
     }
@@ -346,7 +346,7 @@ public class MatchDataManager : DataManager<MatchData>
     /// <summary>
     /// 사용하지 않는 함수입니다.
     /// </summary>
-    protected override IEnumerator GetAllDataCoroutine(Action<MatchData[]> OnCompleted, string requestUrl)
+    protected override IEnumerator GetAllDataCoroutine(Action<bool> OnCompleted, Action<MatchData[]> OnCompletedDatas, string requestUrl)
     {
         throw new System.NotImplementedException("이 클래스에서 사용할 수 없는 함수 입니다."); 
     }

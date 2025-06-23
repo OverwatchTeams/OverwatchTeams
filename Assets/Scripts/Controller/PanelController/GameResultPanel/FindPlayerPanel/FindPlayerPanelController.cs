@@ -19,7 +19,7 @@ public class FindPlayerPanelController : PanelController
     [SerializeField] private TMP_Dropdown _dropdown;
     [SerializeField] private GameObject _playerPrefab;
     [SerializeField] private GameObject _playerContainer;
-    
+    [SerializeField] private bool _isClanMember = true;
     
     public List<GameObject> _playerButtons = new List<GameObject>();
 
@@ -50,11 +50,21 @@ public class FindPlayerPanelController : PanelController
 
     private void InstantiatePlayerButtons()
     {
-        for (int i = 0; i < DataController.instance.Players.Length; i++)
+        PlayerData[] players;
+        if (_isClanMember)
+        {
+            players = DataController.instance.ClanPlayers;
+        }
+        else
+        {
+            players = DataController.instance.AllPlayers;
+        }
+
+        for (int i = 0; i < players.Length; i++)
         {
             GameObject go = Instantiate(_playerPrefab, _playerContainer.transform, false);
-            go.GetComponent<PlayerButtonPrefab>().SetPlayerData(DataController.instance.Players[i]);
-            go.GetComponentInChildren<TMP_Text>().text = DataController.instance.Players[i].player;
+            go.GetComponent<PlayerButtonPrefab>().SetPlayerData(players[i]);
+            go.GetComponentInChildren<TMP_Text>().text = players[i].player;
             _playerButtons.Add(go);
         }
     }

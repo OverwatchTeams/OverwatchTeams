@@ -18,7 +18,7 @@ public class LeaderBoardPanelController : PanelController
     [SerializeField] private GameObject _participantRankContainer;
     [SerializeField] private GameObject _winRateRankPrefab;
     [SerializeField] private GameObject _participantRankPrefab;
-
+    
     private void OnEnable()
     {
         Initialize();
@@ -28,7 +28,9 @@ public class LeaderBoardPanelController : PanelController
     {
         base.Initialize();
         InitializeListeners();
-        StartCoroutine(InitializeContents());
+        _monthlyToggle.SetIsOnWithoutNotify(false);
+        _yearlyToggle.SetIsOnWithoutNotify(true);
+        OnYearlyToggleValueChanged(_yearlyToggle.isOn);
     }
 
     protected override void InitializeListeners()
@@ -40,13 +42,6 @@ public class LeaderBoardPanelController : PanelController
         _dateDropdown.onValueChanged.AddListener(OnDropDownValueChanged);
         _yearlyToggle.onValueChanged.AddListener(OnYearlyToggleValueChanged);
         _monthlyToggle.onValueChanged.AddListener(OnMonthlyToggleValueChanged);
-    }
-
-    private IEnumerator InitializeContents()
-    {
-        yield return StartCoroutine(SetDropdown("year"));
-        string date = _dateDropdown.options[_dateDropdown.value].text;
-        yield return StartCoroutine(SetWinRateContainer("year", date));
     }
 
     private IEnumerator SetDropdown(string yearOrMonth)

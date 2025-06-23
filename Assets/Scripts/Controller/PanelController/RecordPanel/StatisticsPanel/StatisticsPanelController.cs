@@ -18,7 +18,10 @@ public class StatisticsPanelController : PanelController
     {
         base.Initialize();
         InitializeListeners();
-        OnYearlyToggleValueChanged(true);
+        _monthlyToggle.SetIsOnWithoutNotify(false);
+        _adminToggle.SetIsOnWithoutNotify(false);
+        _yearlyToggle.SetIsOnWithoutNotify(true);
+        OnYearlyToggleValueChanged(_yearlyToggle.isOn);
     }
     
     protected override void InitializeListeners()

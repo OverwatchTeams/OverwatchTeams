@@ -25,10 +25,6 @@ public class LoadingController : PanelController
 
     private void Start()
     {
-        DataController.instance.OnDataLoadEnd -= DeactivateLoadingPanel;
-        DataController.instance.OnDataLoadEnd += DeactivateLoadingPanel;
-        DataController.instance.OnDataUpdateEnd -= DeactivateMiniLoadingPanel;
-        DataController.instance.OnDataUpdateEnd += DeactivateMiniLoadingPanel;
     }
 
     private void OnEnable()

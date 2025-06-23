@@ -38,9 +38,9 @@ public class MapTypeDataManager : DataManager<MapTypeData>
     
     #region GetAllData
 
-    protected override IEnumerator GetAllDataCoroutine(Action<MapTypeData[]> OnCompleted, string requestUrl)
+    protected override IEnumerator GetAllDataCoroutine(Action<bool> OnCompleted, Action<MapTypeData[]> OnCompletedDatas, string requestUrl)
     {
-        return base.GetAllDataCoroutine(OnCompleted, url + "GetAllMapTypes");
+        return base.GetAllDataCoroutine(OnCompleted, OnCompletedDatas, url + "GetAllMapTypes");
     }
     #endregion
     

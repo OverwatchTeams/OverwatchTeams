@@ -76,17 +76,18 @@ public class DataManager<T> : MonoBehaviour
    #endregion
    
    #region GetAllData
-   public virtual IEnumerator GetAllData(Action<T[]> OnCompleted)
+   public virtual IEnumerator GetAllData(Action<bool> OnCompleted, Action<T[]> OnCompletedDatas)
    {
-       yield return StartCoroutine(GetAllDataCoroutine(OnCompleted, null));
+       yield return StartCoroutine(GetAllDataCoroutine(OnCompleted, OnCompletedDatas, null));
    }
 
-   protected virtual IEnumerator GetAllDataCoroutine(Action<T[]> OnCompleted, string requestUrl)
+   protected virtual IEnumerator GetAllDataCoroutine(Action<bool> OnCompleted, Action<T[]> OnCompletedDatas, string requestUrl)
    {
        if (string.IsNullOrEmpty(requestUrl))
        {
            Debug.LogError("GetAllData 요청 URL이 null이거나 비어있습니다.");
-           OnCompleted?.Invoke(null);
+           OnCompleted?.Invoke(false);
+           OnCompletedDatas?.Invoke(null);
            yield break;
        }
 
@@ -99,12 +100,14 @@ public class DataManager<T> : MonoBehaviour
                string json = www.downloadHandler.text;
                T[] result = JsonConvert.DeserializeObject<T[]>(json);
                Debug.Log($"데이터 전체 조회 성공: {result.Length}개");
-               OnCompleted?.Invoke(result);
+               OnCompleted?.Invoke(true);
+               OnCompletedDatas?.Invoke(result);
            }
            else
            {
                Debug.LogError($"데이터 전체 조회 실패: {www.responseCode} - {www.error}");
-               OnCompleted?.Invoke(null);
+               OnCompleted?.Invoke(false);
+               OnCompletedDatas?.Invoke(null);
            }
        }
    }

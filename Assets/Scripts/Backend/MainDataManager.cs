@@ -53,18 +53,19 @@ public class MainDataManager : MonoBehaviour
    }
    #endregion
    
-   public IEnumerator GetDropDownDates(Action<RecordDropdownDate> OnCompleted)
+   public IEnumerator GetDropDownDates(Action<bool> OnCompleted, Action<RecordDropdownDate> OnCompletedDatas)
    {
-       yield return StartCoroutine(GetDropDownDatesCoroutine(OnCompleted));
+       yield return StartCoroutine(GetDropDownDatesCoroutine(OnCompleted, OnCompletedDatas));
    }
    
-   private IEnumerator GetDropDownDatesCoroutine(Action<RecordDropdownDate> OnCompleted)
+   private IEnumerator GetDropDownDatesCoroutine(Action<bool> OnCompleted, Action<RecordDropdownDate> OnCompletedDatas)
    {
        string requestUrl = url + "GetDropDownDates";
        if (string.IsNullOrEmpty(requestUrl))
        {
            Debug.LogError("GetDropDownDates 요청 URL이 null이거나 비어있습니다.");
-           OnCompleted?.Invoke(null);
+           OnCompleted?.Invoke(false);
+           OnCompletedDatas?.Invoke(null);
            yield break;
        }
 
@@ -77,23 +78,25 @@ public class MainDataManager : MonoBehaviour
                string json = www.downloadHandler.text;
                RecordDropdownDate result = JsonConvert.DeserializeObject<RecordDropdownDate>(json);
                Debug.Log($"데이터 조회 성공");
-               OnCompleted?.Invoke(result);
+               OnCompleted?.Invoke(true);
+               OnCompletedDatas?.Invoke(result);
            }
            else
            {
                Debug.LogError($"데이터 전체 조회 실패: {www.responseCode} - {www.error}");
-               OnCompleted?.Invoke(null);
+               OnCompleted?.Invoke(false);
+               OnCompletedDatas?.Invoke(null);
            }
        }
    }
    #region GetGameDatas
    
-   public IEnumerator GetGameDatas(Action<GameDatas> OnCompleted, string yearOrMonth, string date)
+   public IEnumerator GetGameDatas(Action<bool> OnCompleted, Action<GameDatas> OnCompletedDatas, string yearOrMonth, string date)
    {
-       yield return StartCoroutine(GetGameDatasCoroutine(OnCompleted, yearOrMonth, date));
+       yield return StartCoroutine(GetGameDatasCoroutine(OnCompleted, OnCompletedDatas, yearOrMonth, date));
    }
 
-   private IEnumerator GetGameDatasCoroutine(Action<GameDatas> OnCompleted, string yearOrMonth, string date)
+   private IEnumerator GetGameDatasCoroutine(Action<bool> OnCompleted, Action<GameDatas> OnCompletedDatas, string yearOrMonth, string date)
    {
        string requestUrl = null;
        switch (yearOrMonth)
@@ -109,7 +112,8 @@ public class MainDataManager : MonoBehaviour
        if (string.IsNullOrEmpty(requestUrl))
        {
            Debug.LogError("GetMainGameDatas 요청 URL이 null이거나 비어있습니다.");
-           OnCompleted?.Invoke(null);
+           OnCompleted?.Invoke(false);
+           OnCompletedDatas?.Invoke(null);
            yield break;
        }
 
@@ -122,12 +126,14 @@ public class MainDataManager : MonoBehaviour
                string json = www.downloadHandler.text;
                GameDatas result = JsonConvert.DeserializeObject<GameDatas>(json);
                Debug.Log($"{date} 게임 데이터 조회 성공");
-               OnCompleted?.Invoke(result);
+               OnCompleted?.Invoke(true);
+               OnCompletedDatas?.Invoke(result);
            }
            else
            {
                Debug.LogError($"{date} 게임 데이터 조회 실패: {www.responseCode} - {www.error}");
-               OnCompleted?.Invoke(null);
+               OnCompleted?.Invoke(false);
+               OnCompletedDatas?.Invoke(null);
            }
        }
    }
@@ -135,12 +141,12 @@ public class MainDataManager : MonoBehaviour
    
    #region GetGameDatas
    
-   public IEnumerator GetLeaderBoard(Action<WinRateData> OnCompleted, string yearOrMonth, string date)
+   public IEnumerator GetLeaderBoard(Action<bool> OnCompleted,Action<WinRateData> OnCompletedDatas, string yearOrMonth, string date)
    {
-       yield return StartCoroutine(GetLeaderBoardCoroutine(OnCompleted, yearOrMonth, date));
+       yield return StartCoroutine(GetLeaderBoardCoroutine(OnCompleted, OnCompletedDatas, yearOrMonth, date));
    }
 
-   private IEnumerator GetLeaderBoardCoroutine(Action<WinRateData> OnCompleted, string yearOrMonth, string date)
+   private IEnumerator GetLeaderBoardCoroutine(Action<bool> OnCompleted,Action<WinRateData> OnCompletedDatas, string yearOrMonth, string date)
    {
        string requestUrl = null;
        switch (yearOrMonth)
@@ -156,7 +162,8 @@ public class MainDataManager : MonoBehaviour
        if (string.IsNullOrEmpty(requestUrl))
        {
            Debug.LogError("GetLeaderBoard 요청 URL이 null이거나 비어있습니다.");
-           OnCompleted?.Invoke(null);
+           OnCompleted?.Invoke(false);
+           OnCompletedDatas?.Invoke(null);
            yield break;
        }
 
@@ -169,12 +176,14 @@ public class MainDataManager : MonoBehaviour
                string json = www.downloadHandler.text;
                WinRateData result = JsonConvert.DeserializeObject<WinRateData>(json);
                Debug.Log($"{date} 랭크 데이터 조회 성공");
-               OnCompleted?.Invoke(result);
+               OnCompleted?.Invoke(true);
+               OnCompletedDatas?.Invoke(result);
            }
            else
            {
                Debug.LogError($"{date} 랭크 데이터 조회 실패: {www.responseCode} - {www.error}");
-               OnCompleted?.Invoke(null);
+               OnCompleted?.Invoke(false);
+               OnCompletedDatas?.Invoke(null);
            }
        }
    }

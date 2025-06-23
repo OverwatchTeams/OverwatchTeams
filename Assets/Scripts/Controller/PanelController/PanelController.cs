@@ -91,7 +91,6 @@ public class PanelController : MonoBehaviour
     
     protected virtual void ReturnToParentPanel()
     {
-        Initialize();
         gameObject.SetActive(false);
     }
     
