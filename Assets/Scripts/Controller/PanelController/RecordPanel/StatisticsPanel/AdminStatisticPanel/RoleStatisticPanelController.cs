@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
@@ -181,9 +182,21 @@ public class RoleStatisticPanelController : PanelController
                 }
 
                 playerInfo._name.text = player.player;
-                playerInfo._dealerScore.text = player.scores.D.ToString();
-                playerInfo._tankerScore.text = player.scores.T.ToString();
-                playerInfo._healerScore.text = player.scores.H.ToString();
+                float dValue = (float)player.scores.D / 100;
+                playerInfo._dealerScore.text = dValue % 1 == 0 
+                    ? ((int)dValue).ToString(CultureInfo.InvariantCulture)
+                    : dValue.ToString("F2", CultureInfo.InvariantCulture);
+                
+                float tValue = (float)player.scores.T / 100;
+                playerInfo._tankerScore.text = tValue % 1 == 0 
+                    ? ((int)tValue).ToString(CultureInfo.InvariantCulture)
+                    : tValue.ToString("F2", CultureInfo.InvariantCulture);
+                
+                float hValue = (float)player.scores.H / 100;
+                playerInfo._healerScore.text = hValue % 1 == 0 
+                    ? ((int)hValue).ToString(CultureInfo.InvariantCulture)
+                    : hValue.ToString("F2", CultureInfo.InvariantCulture);
+                
                 index1++;
             
                 if (player.player != role.Key) continue;
@@ -256,21 +269,26 @@ public class RoleStatisticPanelController : PanelController
                 playerScore._healerScore.text ??= "0";
                 
                 //수정 됐는지 여부 확인
-                if(playerScore._dealerScore.text != DataController.instance.ClanPlayers[index].scores.D.ToString()) isChanged = true;
-                if(playerScore._tankerScore.text != DataController.instance.ClanPlayers[index].scores.T.ToString()) isChanged = true;
-                if(playerScore._healerScore.text != DataController.instance.ClanPlayers[index].scores.H.ToString()) isChanged = true;
+                if((int)(float.Parse(playerScore._dealerScore.text, CultureInfo.InvariantCulture) * 100) != DataController.instance.ClanPlayers[index].scores.D) isChanged = true;
+                if((int)(float.Parse(playerScore._tankerScore.text, CultureInfo.InvariantCulture) * 100) != DataController.instance.ClanPlayers[index].scores.T) isChanged = true;
+                if((int)(float.Parse(playerScore._healerScore.text, CultureInfo.InvariantCulture) * 100) != DataController.instance.ClanPlayers[index].scores.H) isChanged = true;
                 //수정된 데이터는 업데이트
                 if (isChanged)
                 {
                     PlayerData player = new PlayerData();
                     player.scores = new PlayerData.Scores();
                     player.player = DataController.instance.ClanPlayers[index].player;
-                    player.scores.D = Convert.ToInt32(playerScore._dealerScore.text);
-                    player.scores.T = Convert.ToInt32(playerScore._tankerScore.text);
-                    player.scores.H = Convert.ToInt32(playerScore._healerScore.text);
+                    player.scores.D = (int)(float.Parse(playerScore._dealerScore.text, CultureInfo.InvariantCulture) * 100);
+                    player.scores.T = (int)(float.Parse(playerScore._tankerScore.text, CultureInfo.InvariantCulture) * 100);
+                    player.scores.H = (int)(float.Parse(playerScore._healerScore.text, CultureInfo.InvariantCulture) * 100);
                     yield return StartCoroutine(DataController.instance.CreatePlayer(
                         result => {
-                            if (!result) OpenPanel("[Popup] UpdatePlayerErrorMessage");
+                            if (!result)
+                            {
+                                OpenPanel("[PopupPanel] ErrorPopup");
+                                ErrorMessage.Instance.SetOwner(this.gameObject);
+                                ErrorMessage.Instance.SetDescription("통신 중 문제가 발생하였습니다.");
+                            }
                         }, player)
                     );
                 }
@@ -278,7 +296,9 @@ public class RoleStatisticPanelController : PanelController
         }
         //플레이어 정보 업데이트
         yield return StartCoroutine(DataController.instance.GetClanPlayerDatas());
-        OpenPanel("[Popup] UpdatePlayerFinishMessage");
+        OpenPanel("[PopupPanel] FinishPopup");
+        FinishMessage.Instance.SetOwner(this.gameObject);
+        FinishMessage.Instance.SetDescription("저장이 완료되었습니다.");
     }
 
     private void OnDealerButtonClicked()
