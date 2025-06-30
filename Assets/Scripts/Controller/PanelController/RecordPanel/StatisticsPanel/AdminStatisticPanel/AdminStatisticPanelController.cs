@@ -61,7 +61,7 @@ public class AdminStatisticPanelController : PanelController
     {
         PlayerURLData playerURLData = new PlayerURLData();
         playerURLData.isClanMember = "false";
-        playerURLData.fields = new List<string> { "player", "isClanMember", "subNames" };
+        playerURLData.fields = new List<string> { "player", "scores", "isClanMember", "subNames", "dates" };
         playerURLData.sortType = "recent";
         yield return StartCoroutine(DataController.instance.GetAllPlayerDatas(playerURLData));
         OpenPanel("[Panel] PlayerDataStatisticPanel");

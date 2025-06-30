@@ -18,6 +18,7 @@ public class FindMapPanelController : PanelController
     [SerializeField] private TMP_Dropdown _dropdown;
     [SerializeField] private GameObject _mapPrefab;
     [SerializeField] private GameObject _mapContainer;
+    [SerializeField] private ScrollRect _scrollRect;
     
     
     private List<GameObject> _mapButtons = new List<GameObject>();
@@ -88,6 +89,11 @@ public class FindMapPanelController : PanelController
             string typeName = type.name;
             _dropdown.options.Add(new TMP_Dropdown.OptionData(typeName));
         }
+        _dropdown.value = 0;
+        _dropdown.RefreshShownValue();
+        
+        Canvas.ForceUpdateCanvases();
+        _scrollRect.verticalNormalizedPosition = 1f;
     }
     #endregion
 

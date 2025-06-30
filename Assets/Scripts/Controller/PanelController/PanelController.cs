@@ -22,6 +22,7 @@ public class PanelController : MonoBehaviour
             button.onClick.RemoveListener(ReturnToParentPanel);
             button.onClick.AddListener(ReturnToParentPanel);
         }
+        
     }
     
     /// <summary>
@@ -80,7 +81,24 @@ public class PanelController : MonoBehaviour
     {
         foreach (GameObject panel in panels)
         {
-            panel.SetActive(false); 
+            if (!panel.activeSelf) continue;
+            if (panel.TryGetComponent(out ErrorMessage errorMessage))
+                if (!errorMessage.IsOwner(this.gameObject))
+                    return;
+            if (panel.TryGetComponent(out FitterMessage fitterMessage))
+                if (!fitterMessage.IsOwner(this.gameObject))
+                    return;
+            if (panel.TryGetComponent(out FitterMessage finishMessage))
+                if (!finishMessage.IsOwner(this.gameObject))
+                    return;   
+            if (panel.TryGetComponent(out NetworkingMessage networkingMessage))
+                if (!networkingMessage.IsOwner(this.gameObject))
+                    return; 
+        }
+
+        foreach (GameObject panel in panels)
+        {
+            panel.SetActive(false);
         }
     }
 
@@ -91,6 +109,26 @@ public class PanelController : MonoBehaviour
     
     protected virtual void ReturnToParentPanel()
     {
+        foreach (GameObject panel in panels)
+        {
+            if (!panel.activeSelf) continue;
+            if (panel.TryGetComponent(out ErrorMessage errorMessage))
+                if (!errorMessage.IsOwner(this.gameObject))
+                    return;
+            if (panel.TryGetComponent(out FitterMessage fitterMessage))
+                if (!fitterMessage.IsOwner(this.gameObject))
+                    return;
+            if (panel.TryGetComponent(out FinishMessage finishMessage))
+                if (!finishMessage.IsOwner(this.gameObject))
+                    return;   
+            if (panel.TryGetComponent(out NetworkingMessage networkingMessage))
+                if (!networkingMessage.IsOwner(this.gameObject))
+                    return; 
+        }
+        foreach (GameObject panel in panels)
+        {
+            panel.SetActive(false);
+        }
         gameObject.SetActive(false);
     }
     

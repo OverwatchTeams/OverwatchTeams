@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using RainbowArt.CleanFlatUI;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,7 +16,7 @@ public class GameResultPanelController : PanelController
     [SerializeField] private Image[] _teamCrownIcons;
     [SerializeField] private Button _finishButton;
     [SerializeField] private Button _confirmCreateMatchButton;
-    [SerializeField] private TMP_Text _errorText;
+    [SerializeField] private GameObject _calendar;
     
     [SerializeField] private FindPlayerPanelController _findPlayerPanelController;
     [SerializeField] private FindMapPanelController _findMapPanelController;
@@ -52,6 +53,7 @@ public class GameResultPanelController : PanelController
 
         //맵, 플레이어등 버튼리스너 초기화
         InitializeListeners();
+        
     }
 
     private void InitializePanel()
@@ -71,7 +73,8 @@ public class GameResultPanelController : PanelController
         }
         //맵 리셋
         _mapButton.GetComponentInChildren<TMP_Text>().text = "-";
-        
+        _date.text = DateTime.Now.ToString("yyyy-MM-dd");
+        _calendar.GetComponent<CalendarController>()._calendarPanel.SetActive(false);
     }
 
     protected override void InitializeListeners()
@@ -210,34 +213,53 @@ public class GameResultPanelController : PanelController
     {
         if (!CheckMapSavable())
         {
-            _errorText.text = "맵을 선택해주세요";
-            OpenPanel("[Popup] SaveErrorMessage", false);
+            OpenPanel("[PopupPanel] ErrorPopup", false);
+            ErrorMessage.Instance.SetOwner(this.gameObject);
+            ErrorMessage.Instance.SetDescription("맵을 선택해주세요");
         }
         else if (!CheckWinnerSavable())
         {
-            _errorText.text = "승자를 선택해주세요";
-            OpenPanel("[Popup] SaveErrorMessage", false);
+            OpenPanel("[PopupPanel] ErrorPopup", false);
+            ErrorMessage.Instance.SetOwner(this.gameObject);
+            ErrorMessage.Instance.SetDescription("승자를 선택해주세요");
         }
         else if (!CheckPlayerSavable())
         {
-            _errorText.text = "플레이어를 모두 선택해주세요";
-            OpenPanel("[Popup] SaveErrorMessage", false);
+            OpenPanel("[PopupPanel] ErrorPopup", false);
+            ErrorMessage.Instance.SetOwner(this.gameObject);
+            ErrorMessage.Instance.SetDescription("플레이어를 모두 선택해주세요");
         }
         else
         {
-            OpenPanel("[Popup] SaveCheckMessage", false);
+            OpenPanel("[PopupPanel] FitterPopup", false);
+            FitterMessage.Instance.SetOwner(this.gameObject);
+            FitterMessage.Instance.SetDescription("이대로 저장하겠습니까?");
         }
     }
 
     private void CreateMatch()
     {
+        if (!FitterMessage.Instance.IsOwner(this.gameObject)) return;
         RefinedMatchData data = SetRefinedMatchData();
+        
+        OpenPanel("[PopupPanel] NetworkingPopup");
+        NetworkingMessage.Instance.SetOwner(this.gameObject);
+        NetworkingMessage.Instance.SetDescription("저장 중 입니다.");
         StartCoroutine(DataController.instance.CreateMatch(result =>
         {
+            NetworkingMessage.Instance.gameObject.SetActive(false);
             if (result)
-                OpenPanel("[Popup] AddMatchFinishMessage");
+            {
+                OpenPanel("[PopupPanel] FinishPopup");
+                FinishMessage.Instance.SetOwner(this.gameObject);
+                FinishMessage.Instance.SetDescription("저장이 완료되었습니다."+ "\n<color=#FF8080>데이터베이스 업데이트 중에는 다른 통신이 불가할 수 있습니다.</color>");
+            }
             else
-                OpenPanel("[Popup] AddMatchFailedMessage");
+            {
+                OpenPanel("[PopupPanel] ErrorPopup");
+                ErrorMessage.Instance.SetOwner(this.gameObject);
+                ErrorMessage.Instance.SetDescription("통신 중 문제가 발생하였습니다.");
+            }
         }, data));
     }
 

@@ -18,6 +18,7 @@ public class LeaderBoardPanelController : PanelController
     [SerializeField] private GameObject _participantRankContainer;
     [SerializeField] private GameObject _winRateRankPrefab;
     [SerializeField] private GameObject _participantRankPrefab;
+    [SerializeField] private List<ScrollRect> _scrollRects;
     
     private void OnEnable()
     {
@@ -44,10 +45,10 @@ public class LeaderBoardPanelController : PanelController
         _monthlyToggle.onValueChanged.AddListener(OnMonthlyToggleValueChanged);
     }
 
-    private IEnumerator SetDropdown(string yearOrMonth)
+    private IEnumerator SetDropdown(string category)
     {
         _dateDropdown.ClearOptions();
-        switch (yearOrMonth)
+        switch (category)
         {
             case "year":
                 foreach (var year in DataController.instance.RecordDropdownDates.year)
@@ -63,12 +64,19 @@ public class LeaderBoardPanelController : PanelController
                 }
                 break;
         }
+        _dateDropdown.value = 0;
         _dateDropdown.RefreshShownValue();
+        
+        Canvas.ForceUpdateCanvases();
+        foreach (var scrollRect in _scrollRects)
+        {
+            scrollRect.verticalNormalizedPosition = 1f;
+        }
 
         yield return null;
     }
 
-    private IEnumerator SetWinRateContainer(string yearOrMonth, string date)
+    private IEnumerator SetWinRateContainer(string category, string date)
     {
         //랭크표 컨테이너 초기화
         foreach (Transform child in _winRateRankContainer.transform)
@@ -83,7 +91,7 @@ public class LeaderBoardPanelController : PanelController
 
         //랭크 불러오기 승률
         int i = 1;
-        yield return StartCoroutine(DataController.instance.GetMainLeaderBoardData(yearOrMonth, date));
+        yield return StartCoroutine(DataController.instance.GetMainLeaderBoardData(category, date));
         foreach (var rank in DataController.instance.WinRateData.winRate.total)
         {
             if (i > 10) break;
@@ -182,15 +190,15 @@ public class LeaderBoardPanelController : PanelController
     private void OnDropDownValueChanged(int value)
     {
         string date = _dateDropdown.options[value].text;
-        string yearOrMonth = "";
+        string category = "";
         if (_yearlyToggle.isOn)
         {
-            yearOrMonth = "year";
+            category = "year";
         }
         else
         {
-            yearOrMonth = "month";
+            category = "month";
         }
-        StartCoroutine(SetWinRateContainer(yearOrMonth, date));
+        StartCoroutine(SetWinRateContainer(category, date));
     }
 }

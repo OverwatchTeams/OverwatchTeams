@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using RainbowArt.CleanFlatUI;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,7 +10,6 @@ public class AddPlayerPanelController : PanelController
 {
     [SerializeField] private TMP_InputField _newPlayerName;
     
-    [SerializeField] private TMP_Text _errorMessage;
     [SerializeField] private Button _addPlayerConfirmButton;
     [SerializeField] private Button _addPlayerConfirmConfirmButton;
     
@@ -19,14 +19,9 @@ public class AddPlayerPanelController : PanelController
     
     private void OnEnable()
     {
-        Debug.Log("OnEnable AddPlayer");
         Initialize();
     }
-
-    public void ReInitialize()
-    {
-        Initialize();
-    }
+    
     protected override void Initialize()
     {
         base.Initialize();
@@ -34,7 +29,7 @@ public class AddPlayerPanelController : PanelController
         //리스너 초기화
         InitializeListeners();
     }
-
+    
     protected override void InitializeListeners()
     {
         base.InitializeListeners();
@@ -49,51 +44,55 @@ public class AddPlayerPanelController : PanelController
     
     private void OnClickAddPlayerConfirmConfirmButton()
     {
+        if (!FitterMessage.Instance.IsOwner(gameObject)) return;
         PlayerData newPlayer = new PlayerData();
+        newPlayer.isClanMember = true;
         newPlayer.player = _newPlayerName.text;
         newPlayer.scores = new PlayerData.Scores();
+        OpenPanel("[PopupPanel] NetworkingPopup");
+        NetworkingMessage.Instance.SetOwner(this.gameObject);
+        NetworkingMessage.Instance.SetDescription("저장 중 입니다.");
         StartCoroutine(DataController.instance.CreatePlayer(
             result => {
+                NetworkingMessage.Instance.gameObject.SetActive(false);
                 if (result)
                 {
                     _findPlayerPanelController.ReInitialize();
-                    OpenPanel("[Popup] AddPlayerFinishMessage");
+                    OpenPanel("[PopupPanel] FinishPopup");
+                    FinishMessage.Instance.SetOwner(this.gameObject);
+                    FinishMessage.Instance.SetDescription("플레이어를 저장하였습니다.");
                 }
                 else
-                    OpenPanel("[Popup] AddPlayerFailedMessage");
+                {
+                    OpenPanel("[PopupPanel] ErrorPopup");
+                    ErrorMessage.Instance.SetOwner(this.gameObject);
+                    ErrorMessage.Instance.SetDescription("통신 중 문제가 발생했습니다.");
+                }
             }, newPlayer)
         );
-        
-        OpenPanel("[Popup] AddPlayerFinishMessage");
     }
     
     private void OnClickAddPlayerConfirmButton()
     {
-        if (!CheckPlayerNameSavable())
-        {
-            OpenPanel("[Popup] AddPlayerErrorMessage");
-        }
-        else
-        {
-            OpenPanel("[Popup] AddPlayerConfirmMessage");   
-        }
-    }
-
-    private bool CheckPlayerNameSavable()
-    {
         if (string.IsNullOrWhiteSpace(_newPlayerName.text))
         {
-            _errorMessage.text = "플레이어 이름을 기입해 주세요";
-            return false;
+            OpenPanel("[PopupPanel] ErrorPopup");
+            ErrorMessage.Instance.SetOwner(this.gameObject);
+            ErrorMessage.Instance.SetDescription("플레이어 이름을 기입해 주세요");
+            return;
         }
         foreach (var button in _findPlayerPanelController._playerButtons)
         {
             if (button.GetComponentInChildren<TextMeshProUGUI>().text == _newPlayerName.text)
             {
-                _errorMessage.text = "이미 존재하는 플레이어 입니다.";
-                return false;
+                OpenPanel("[PopupPanel] ErrorPopup");
+                ErrorMessage.Instance.SetOwner(this.gameObject);
+                ErrorMessage.Instance.SetDescription("이미 존재하는 플레이어 입니다.");
+                return;
             }
         }
-        return true;
+        OpenPanel("[PopupPanel] FitterPopup");
+        FitterMessage.Instance.SetOwner(this.gameObject);
+        FitterMessage.Instance.SetDescription("이대로 저장하겠습니까?");
     }
 }

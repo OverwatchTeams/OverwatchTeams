@@ -12,7 +12,8 @@ public class DateStatisticPanelController : PanelController
     [SerializeField] private GameObject _mapSelectedPrefab;
     [SerializeField] private TMP_Text _totalRoundCount;
     [SerializeField] private TMP_Text _requireRoundCount;
-    private string _yearOrMonth = "year";
+    [SerializeField] private ScrollRect _scrollRect;
+    private string _category = "year";
     
     private void OnEnable()
     {
@@ -32,9 +33,9 @@ public class DateStatisticPanelController : PanelController
         _dateDropdown.onValueChanged.AddListener(OnDropDownValueChanged);
     }
 
-    public void ChangeDateSetting(string yearOrMonth)
+    public void ChangeDateSetting(string category)
     {
-        _yearOrMonth = yearOrMonth;
+        _category = category;
         StartCoroutine(InitializeContents());
     }
     
@@ -48,7 +49,7 @@ public class DateStatisticPanelController : PanelController
     private IEnumerator SetDropdown()
     {
         _dateDropdown.ClearOptions();
-        switch (_yearOrMonth)
+        switch (_category)
         {
             case "year":
                 foreach (var year in DataController.instance.RecordDropdownDates.year)
@@ -64,7 +65,11 @@ public class DateStatisticPanelController : PanelController
                 }
                 break;
         }
+        _dateDropdown.value = 0;
         _dateDropdown.RefreshShownValue();
+        
+        Canvas.ForceUpdateCanvases();
+        _scrollRect.verticalNormalizedPosition = 1f;
 
         yield return null;
     }
@@ -85,7 +90,7 @@ public class DateStatisticPanelController : PanelController
         
         //랭크 불러오기 승률
         int i = 1;
-        yield return StartCoroutine(DataController.instance.GetMainGameDatas(_yearOrMonth, date));
+        yield return StartCoroutine(DataController.instance.GetMainGameDatas(_category, date));
         var sortedMaps = DataController.instance.GameDatas.map
             .OrderByDescending(map => map.Value)
             .ToList();

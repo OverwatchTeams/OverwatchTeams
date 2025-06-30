@@ -10,7 +10,6 @@ public class AddMapPanelController : PanelController
     [SerializeField] private TMP_InputField _newMapName;
     [SerializeField] private TMP_Dropdown _mapType;
     
-    [SerializeField] private TMP_Text _errorMessage;
     [SerializeField] private Button _addMapConfirmButton;
     [SerializeField] private Button _addMapConfirmConfirmButton;
     
@@ -65,42 +64,49 @@ public class AddMapPanelController : PanelController
     
     private void OnClickAddMapConfirmConfirmButton()
     {
+        if (!FitterMessage.Instance.IsOwner(gameObject)) return;
         MapData newMap = new MapData();
         newMap.index = DataController.instance.Maps.Length;
         newMap.name = _newMapName.text;
         newMap.type = _mapType.options[_mapType.value].text;
 
+        OpenPanel("[PopupPanel] NetworkingPopup");
+        NetworkingMessage.Instance.SetOwner(this.gameObject);
+        NetworkingMessage.Instance.SetDescription("저장 중 입니다.");
         StartCoroutine(DataController.instance.CreateMap(
             result => {
+                NetworkingMessage.Instance.gameObject.SetActive(false);
                 if (result)
                 {
                     _findMapPanelController.ReInitialize();
-                    OpenPanel("[Popup] AddMapFinishMessage");
+                    OpenPanel("[PopupPanel] FinishPopup");
+                    FinishMessage.Instance.SetOwner(this.gameObject);
+                    FinishMessage.Instance.SetDescription("맵을 저장하였습니다.");
                 }
                 else
-                    OpenPanel("[Popup] AddMapFailedMessage");
+                {
+                    OpenPanel("[PopupPanel] ErrorPopup");
+                    ErrorMessage.Instance.SetOwner(this.gameObject);
+                    ErrorMessage.Instance.SetDescription("통신 중 문제가 발생했습니다.");   
+                }
             }, newMap)
         );
     }
     
     private void OnClickAddMapConfirmButton()
     {
-        if (!CheckMapNameSavable())
+        if (!string.IsNullOrWhiteSpace(_newMapName.text))
         {
-            _errorMessage.text = "맵 이름을 기입해 주세요";
-            OpenPanel("[Popup] AddMapErrorMessage");
+            OpenPanel("[PopupPanel] ErrorPopup");
+            ErrorMessage.Instance.SetOwner(this.gameObject);
+            ErrorMessage.Instance.SetDescription("맵 이름을 기입해주세요");
         }
         else
         {
-            OpenPanel("[Popup] AddMapConfirmMessage");   
+            OpenPanel("[PopupPanel] FitterPopup");
+            FitterMessage.Instance.SetOwner(this.gameObject);
+            FitterMessage.Instance.SetDescription("이대로 저장하겠습니까?");
         }
-    }
-
-    private bool CheckMapNameSavable()
-    {
-        if (string.IsNullOrWhiteSpace(_newMapName.text))
-            return false;
-        return true;
     }
     
     /// <summary>

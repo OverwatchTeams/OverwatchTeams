@@ -81,7 +81,7 @@ public class PlayerDataStatisticPanel : PanelController
                 }
             }   
             _playerName.GetComponentInChildren<TMP_Text>().text = _playerData.player;
-            _isClanMemberIcon.SetIsOnWithoutNotify(_playerData.isClanMember);
+            _isClanMemberIcon.SetIsOnWithoutNotify(_playerData.isClanMember ?? false);
         }
         _playerName.GetComponent<Button>().interactable = false;
     }
@@ -115,7 +115,7 @@ public class PlayerDataStatisticPanel : PanelController
         {
             go.SetActive(true);
         }
-        
+        _addSubNameInput.text = "";
         _isClanMemberIcon.interactable = true;
 
         foreach (Button subNameButton in _subNameButtons)
@@ -157,7 +157,7 @@ public class PlayerDataStatisticPanel : PanelController
         );
         PlayerURLData playerURLData = new PlayerURLData();
         playerURLData.isClanMember = "false";
-        playerURLData.fields = new List<string> { "player", "isClanMember", "subNames" };
+        playerURLData.fields = new List<string> { "player", "scores", "isClanMember", "subNames", "dates" };
         playerURLData.sortType = "recent";
         yield return StartCoroutine(DataController.instance.GetAllPlayerDatas(playerURLData));
         Initialize();
@@ -168,6 +168,8 @@ public class PlayerDataStatisticPanel : PanelController
         GameObject button = EventSystem.current.currentSelectedGameObject;
         _playerData.subNames.Remove(button.GetComponentInChildren<TMP_Text>().text);
         _subNameButtons.Remove(button.GetComponent<Button>());
+        button.GetComponent<Button>().onClick.RemoveListener(OnClickSubNameButton);
+        Destroy(button);
     }
 
     private void OnClickIsClanMemberIconChanged(bool value)
@@ -184,7 +186,16 @@ public class PlayerDataStatisticPanel : PanelController
             _playerData = player;
             break;
         }
+        foreach (var go in _editModeGameObjects)
+        {
+            go.SetActive(false);
+        }
+        _isClanMemberIcon.interactable = false;
         _editPlayerButton.gameObject.SetActive(true);
+        foreach (Button subNameButton in _subNameButtons)
+        {
+            subNameButton.interactable = false;
+        }
         Initialize();
     }
     

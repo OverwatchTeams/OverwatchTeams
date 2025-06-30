@@ -19,6 +19,7 @@ public class FindPlayerPanelController : PanelController
     [SerializeField] private TMP_Dropdown _dropdown;
     [SerializeField] private GameObject _playerPrefab;
     [SerializeField] private GameObject _playerContainer;
+    [SerializeField] private ScrollRect _scrollRect;
     [SerializeField] private bool _isClanMember = true;
     
     public List<GameObject> _playerButtons = new List<GameObject>();
@@ -28,7 +29,6 @@ public class FindPlayerPanelController : PanelController
     #region initialization
     private void OnEnable()
     {
-        Debug.Log("OnEnable");
         Initialize();
     }
 
@@ -43,8 +43,9 @@ public class FindPlayerPanelController : PanelController
         //패널 초기화
         InitializePanel();
         
-        //맵버튼 생성 및 초기화
+        //플레이어 버튼 생성 및 초기화
         InstantiatePlayerButtons();
+        
         InitializeListeners();
     }
 
@@ -67,6 +68,9 @@ public class FindPlayerPanelController : PanelController
             go.GetComponentInChildren<TMP_Text>().text = players[i].player;
             _playerButtons.Add(go);
         }
+        _dropdown.value = 0;
+        OnDropdownValueChanged(0);
+        _dropdown.RefreshShownValue();
     }
     protected override void InitializeListeners()
     {
@@ -76,11 +80,15 @@ public class FindPlayerPanelController : PanelController
             playerButton.GetComponentInChildren<Button>().onClick.RemoveListener(()=>OnClickPlayer(playerButton));
             playerButton.GetComponentInChildren<Button>().onClick.AddListener(()=>OnClickPlayer(playerButton));
         }
-        _addPlayerButton.onClick.RemoveListener(OnClickAddPlayer);
-        _addPlayerButton.onClick.AddListener(OnClickAddPlayer);
+
+        if (_addPlayerButton != null)
+        {
+            _addPlayerButton.onClick.RemoveListener(OnClickAddPlayer);
+            _addPlayerButton.onClick.AddListener(OnClickAddPlayer);   
+        }
         
-        /*_dropdown.onValueChanged.RemoveListener(OnDropdownValueChanged);
-        _dropdown.onValueChanged.AddListener(OnDropdownValueChanged);*/
+        _dropdown.onValueChanged.RemoveListener(OnDropdownValueChanged);
+        _dropdown.onValueChanged.AddListener(OnDropdownValueChanged);
     }
     
     private void InitializePanel()
@@ -93,7 +101,11 @@ public class FindPlayerPanelController : PanelController
         }
         
         _dropdown.ClearOptions();
-        _dropdown.options.Add(new TMP_Dropdown.OptionData("전체"));
+        _dropdown.options.Add(new TMP_Dropdown.OptionData("최근 참여 순"));
+        _dropdown.options.Add(new TMP_Dropdown.OptionData("사전 순"));
+        
+        Canvas.ForceUpdateCanvases();
+        _scrollRect.verticalNormalizedPosition = 1f;
     }
 
     public void FilterSelectedPlayer(Button[] buttons)
@@ -112,27 +124,33 @@ public class FindPlayerPanelController : PanelController
     }
     #endregion
 
-    /*private void OnDropdownValueChanged(int value)
+    private void OnDropdownValueChanged(int value)
     {
-        if (_dropdown.options[value].text == "전체")
+        if (_dropdown.options[value].text == "최근 참여 순")
         {
-            foreach (var playerButton in _playerButtons)
+            _playerButtons.Sort((a, b) =>
             {
-                playerButton.SetActive(true);
-            }
+                var aData = a.GetComponent<PlayerButtonPrefab>().PlayerData.dates;
+                var bData = b.GetComponent<PlayerButtonPrefab>().PlayerData.dates;
+
+                if (aData == null && bData == null) return 0;
+                if (aData == null) return 1;   // a가 null이면 뒤로
+                if (bData == null) return -1;  // b가 null이면 a가 앞으로
+
+                return bData.lastRound.CompareTo(aData.lastRound); // 최신 순 (내림차순)
+            });
         }
-        foreach (var playerButton in _playerButtons)
+        else if (_dropdown.options[value].text == "사전 순")
         {
-            if (playerButton.GetComponent<PlayerButtonPrefab>().PlayerData.type == _dropdown.options[value].text)
-            {
-                playerButton.SetActive(true);
-            }
-            else
-            {
-                playerButton.SetActive(false);
-            }
+            _playerButtons.Sort((a, b) => 
+                string.Compare(a.GetComponent<PlayerButtonPrefab>().PlayerData.player, b.GetComponent<PlayerButtonPrefab>().PlayerData.player, StringComparison.Ordinal));
         }
-    }*/
+
+        for (int i = 0; i < _playerButtons.Count; i++)
+        {
+            _playerButtons[i].transform.SetSiblingIndex(i);
+        }
+    }
 
     #region 업데이트
     void Update()
