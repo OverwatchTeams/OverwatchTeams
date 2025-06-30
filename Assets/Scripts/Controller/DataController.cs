@@ -16,6 +16,7 @@ public class DataController : MonoBehaviour
     private RecordDropdownDate _recordDropdownDates;
     private WinRateData _winRateData;
     private GameDatas _gameDatas;
+    private DailyGameData _dailyGameData;
 
     public MapData[] Maps => _maps.Clone() as MapData[];
     public MapTypeData[] MapTypes => _maptypes.Clone() as MapTypeData[];
@@ -24,6 +25,7 @@ public class DataController : MonoBehaviour
     public RecordDropdownDate RecordDropdownDates => _recordDropdownDates;
     public WinRateData WinRateData => _winRateData;
     public GameDatas GameDatas => _gameDatas;
+    public DailyGameData DailyGameData => _dailyGameData;
     
     [SerializeField] private ModalWindowProgressBarLoop _defaultProgressPopup;
     [SerializeField] private ProgressBarLoop _miniProgressPopup;
@@ -31,7 +33,7 @@ public class DataController : MonoBehaviour
     [SerializeField] private ModalWindow _warningPopup;
     
     private InformMessage _informMessage;
-    private bool _isLoading;
+    public bool _isLoading;
 
     #region Initiaize
     private void Awake()
@@ -105,10 +107,12 @@ public class DataController : MonoBehaviour
         _defaultProgressPopup.DescriptionValue = _informMessage.GetRandomMessage();
         yield return StartCoroutine(MapTypeDataManager.instance.GetAllData(success => isSucceed = success, OnMapTypeLoaded));
         if (!isSucceed) ErrorOccured("[903] Get MapTypes Failed");
+        yield return StartCoroutine(MainDataManager.instance.GetDropDownDates(success => isSucceed = success, OnDropdownDatesLoaded));
+        if (!isSucceed) ErrorOccured("[916] Get DropDownDates Failed");
         FinishLoading();
     }
     #endregion
-
+    
     #region MainData
     private void OnLeaderBoardLoaded(WinRateData winRateData)
     {
@@ -118,6 +122,12 @@ public class DataController : MonoBehaviour
     {
         _gameDatas = gameDatas;
     }
+    
+    private void OnDailyGameDataLoaded(DailyGameData dailyGameData)
+    {
+        _dailyGameData = dailyGameData;
+    }
+    
     private IEnumerator UpdateMainData()
     {
         bool isSucceed = false;
@@ -132,29 +142,38 @@ public class DataController : MonoBehaviour
         FinishMiniLoading();
         if (!isSucceed) ErrorOccured("[904] Update MainDocument Failed");
     }
-    public IEnumerator GetMainLeaderBoardData(string yearOrMonth, string date)
+    public IEnumerator GetMainLeaderBoardData(string category, string date)
     {
         bool isSucceed = false;
-        if (_isLoading || (yearOrMonth != "year" && yearOrMonth != "month"))
+        if (_isLoading || (category != "year" && category != "month" && category != "day"))
         {
             _warningPopup.ShowModalWindow();
             yield break;
         } 
         StartCircularLoading();
-        yield return StartCoroutine(MainDataManager.instance.GetLeaderBoard(success => isSucceed = success, OnLeaderBoardLoaded, yearOrMonth, date));
+        yield return StartCoroutine(MainDataManager.instance.GetLeaderBoard(success => isSucceed = success, OnLeaderBoardLoaded, category, date));
         FinishCircularLoading();
         if (!isSucceed) ErrorOccured("[905] Get LeaderBoard Failed");
     }
-    public IEnumerator GetMainGameDatas(string yearOrMonth, string date)
+    public IEnumerator GetMainGameDatas(string category, string date)
     {
         bool isSucceed = false;
-        if (_isLoading || (yearOrMonth != "year" && yearOrMonth != "month"))
+        if (_isLoading || (category != "year" && category != "month" && category != "day"))
         {
             _warningPopup.ShowModalWindow();
             yield break;
         } 
         StartCircularLoading();
-        yield return StartCoroutine(MainDataManager.instance.GetGameDatas(success => isSucceed = success, OnGameDatasLoaded, yearOrMonth, date));
+        yield return StartCoroutine(MainDataManager.instance.GetGameDatas(success => isSucceed = success, OnGameDatasLoaded, category, date));
+        FinishCircularLoading();
+        if (!isSucceed) ErrorOccured("[906] Get GameDatas Failed");
+    }
+
+    public IEnumerator GetMainDailyData(string date)
+    {
+        bool isSucceed = false;
+        StartCircularLoading();
+        yield return StartCoroutine(MainDataManager.instance.GetMainDailyData(success => isSucceed = success, OnDailyGameDataLoaded,date));
         FinishCircularLoading();
         if (!isSucceed) ErrorOccured("[906] Get GameDatas Failed");
     }
@@ -175,7 +194,16 @@ public class DataController : MonoBehaviour
     {
         PlayerURLData playerURLData = new PlayerURLData();
         playerURLData.isClanMember = "true";
-        playerURLData.fields = new List<string> { "player", "scores" };
+        playerURLData.fields = new List<string> { "player", "scores" , "subNames", "dates"};
+        playerURLData.sortType = "recent";
+        return playerURLData;
+    }
+    
+    private PlayerURLData SetAllPlayerURLData()
+    {
+        PlayerURLData playerURLData = new PlayerURLData();
+        playerURLData.isClanMember = "false";
+        playerURLData.fields = new List<string> { "player", "scores", "isClanMember", "subNames", "dates" };
         playerURLData.sortType = "recent";
         return playerURLData;
     }
@@ -194,7 +222,7 @@ public class DataController : MonoBehaviour
         if (!isSucceed) ErrorOccured("[907] UpdatePlayerDocuments Failed");
         _miniProgressPopup.TextValue = _informMessage.GetRandomMessage();
         yield return StartCoroutine(PlayerDataManager.instance.GetAllPlayers(success => isSucceed = success, OnClanPlayersLoaded, SetClanPlayerURLData()));
-        FinishLoading();
+        FinishMiniLoading();
         if (!isSucceed) ErrorOccured("[901] Get ClanPlayers Failed : UpdatePlayeDatas");
     }
     
@@ -212,6 +240,7 @@ public class DataController : MonoBehaviour
         yield return StartCoroutine(PlayerDataManager.instance.AddData(success => isSucceed = success, player));
         if (!isSucceed) ErrorOccured("[908] Add Data Failed");
         yield return StartCoroutine(PlayerDataManager.instance.GetAllPlayers(success => isSucceed = success, OnClanPlayersLoaded, SetClanPlayerURLData()));
+        yield return StartCoroutine(PlayerDataManager.instance.GetAllPlayers(success => isSucceed = success, OnAllPlayersLoaded, SetAllPlayerURLData()));
         FinishLoading();
         OnFinished?.Invoke(isSucceed);
         if (!isSucceed) ErrorOccured("[901] Get ClanPlayers Failed : CreatePlayer");
@@ -232,9 +261,16 @@ public class DataController : MonoBehaviour
         bool isSucceed = false;
         StartCircularLoading();
         playerURLData.isClanMember = "false";
-        yield return StartCoroutine(PlayerDataManager.instance.GetAllPlayers(success => isSucceed = success, OnAllPlayersLoaded, playerURLData));
+        yield return StartCoroutine(PlayerDataManager.instance.GetAllPlayers(success => isSucceed = success, OnAllPlayersLoaded, SetAllPlayerURLData()));
         FinishCircularLoading();
         if (!isSucceed) ErrorOccured("[910] Get AllPlayers Failed");
+    }
+
+    public IEnumerator GetPlayerData(Action<bool> OnCompleted, Action<PlayerData> OnPlayerLoaded, string playerName)
+    {
+        StartCircularLoading();
+        yield return StartCoroutine(PlayerDataManager.instance.GetPlayerData(OnCompleted, OnPlayerLoaded, playerName));
+        FinishCircularLoading();
     }
     #endregion
     
@@ -251,9 +287,11 @@ public class DataController : MonoBehaviour
         StartLoading();
         _defaultProgressPopup.DescriptionValue = _informMessage.GetRandomMessage();
         yield return StartCoroutine(MatchDataManager.instance.AddData(success => isSucceed = success, match));
-        OnCreated?.Invoke(isSucceed);
-        FinishLoading();
         if (!isSucceed) ErrorOccured("[911] CreateMatch Failed");
+        OnCreated?.Invoke(isSucceed);
+        yield return StartCoroutine(MainDataManager.instance.GetDropDownDates(success => isSucceed = success, OnDropdownDatesLoaded));
+        if (!isSucceed) ErrorOccured("[916] Get DropDownDates Failed");
+        FinishLoading();
         UpdateMainAndPlayerDatas();
     }
     private void UpdateMainAndPlayerDatas()
@@ -320,22 +358,6 @@ public class DataController : MonoBehaviour
     private void OnDropdownDatesLoaded(RecordDropdownDate dropdownDates)
     {
         _recordDropdownDates = dropdownDates;
-    }
-    public IEnumerator GetDropdownDate(Action<bool> OnFinished)
-    {
-        bool isSucceed = false;
-        if (_isLoading)
-        {
-            _warningPopup.ShowModalWindow();
-            OnFinished?.Invoke(false);
-            yield break;
-        } 
-        StartLoading();
-        _defaultProgressPopup.DescriptionValue = _informMessage.GetRandomMessage();
-        yield return StartCoroutine(MainDataManager.instance.GetDropDownDates(success => isSucceed = success, OnDropdownDatesLoaded));
-        OnFinished?.Invoke(isSucceed);
-        FinishLoading();
-        if (!isSucceed) ErrorOccured("[916] Get DropDownDates Failed");
     }
     #endregion
 }

@@ -24,7 +24,7 @@ public class PlayerDataManager : DataManager<PlayerData>
     }
     
     #region AddData
-    protected override IEnumerator AddDataCoroutine(Action<bool> OnCompleted, PlayerData data, string requestUrl)
+    public override IEnumerator AddData(Action<bool> OnCompleted, PlayerData data)
     {
         return base.AddDataCoroutine(OnCompleted, data, url + "CreatePlayer");
     }
@@ -51,6 +51,45 @@ public class PlayerDataManager : DataManager<PlayerData>
     }
     
     #endregion
+    #endregion
+    
+    #region GetPlayerData
+
+    public IEnumerator GetPlayerData(Action<bool> OnCompleted, Action<PlayerData> OnCompletedData, string playerName)
+    {
+        return GetPlayerDataCoroutine(OnCompleted, OnCompletedData, url + "GetPlayerData?Name=" + playerName);
+    }
+
+    private IEnumerator GetPlayerDataCoroutine(Action<bool> OnCompleted, Action<PlayerData> OnCompletedData, string requestUrl)
+    {
+        if (string.IsNullOrEmpty(requestUrl))
+        {
+            Debug.LogError("GetPlayerData 요청 URL이 null이거나 비어있습니다.");
+            OnCompleted?.Invoke(false);
+            OnCompletedData?.Invoke(null);
+            yield break;
+        }
+
+        using (UnityWebRequest www = UnityWebRequest.Get(requestUrl))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                string json = www.downloadHandler.text;
+                PlayerData result = JsonConvert.DeserializeObject<PlayerData>(json);
+                Debug.Log($"데이터 조회 성공");
+                OnCompleted?.Invoke(true);
+                OnCompletedData?.Invoke(result);
+            }
+            else
+            {
+                Debug.LogError($"데이터 조회 실패: {www.responseCode} - {www.error}");
+                OnCompleted?.Invoke(false);
+                OnCompletedData?.Invoke(null);
+            }
+        }
+    }
     #endregion
     
     #region UpdatePlayerDocument

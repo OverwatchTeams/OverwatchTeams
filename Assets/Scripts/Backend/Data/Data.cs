@@ -35,6 +35,25 @@ public enum WinnerTeam
 }
 
 [System.Serializable]
+public class DailyGameData
+{
+    public string updateDate;
+    public GameDataContainer gameDatas;
+    public LeaderBoardContainer leaderBoard;
+    
+    [System.Serializable]
+    public class GameDataContainer
+    {
+        public Dictionary<string, GameDatas> byDay;
+    }
+    
+    [System.Serializable]
+    public class LeaderBoardContainer
+    {
+        public Dictionary<string, WinRateData> byDay;
+    }
+}
+[System.Serializable]
 public class MatchData
 {
     public int index;
@@ -82,18 +101,21 @@ public class MapTypeData
 public class PlayerData
 {
     public string player;
+    public bool? isClanMember;
     public Date dates;
-    public bool isClanMember;
     public Scores scores;
-    public List<string> subNames;
     public WinRate winRates;
+    public List<string> subNames;
     public Dictionary<string, PositionSet> synergy;
 
     [Serializable]
     public class Date
     {
+        [JsonConverter(typeof(DefaultDateTimeConverter))]
         public DateTime first;
+        [JsonConverter(typeof(DefaultDateTimeConverter))]
         public DateTime last;
+        [JsonConverter(typeof(DefaultIntConverter))]
         public int lastRound;
     }
     
@@ -124,7 +146,7 @@ public class PlayerData
                 public int requiredGames;
                 public int wins;
                 public int draws;
-                public int rate;
+                public float rate;
             }
 
             public class RoleGame
@@ -169,6 +191,7 @@ public class RecordDropdownDate
 {
     public List<string> year;
     public List<string> month;
+    public List<string> day;
 }
 
 public class PlayerURLData

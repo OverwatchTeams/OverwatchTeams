@@ -91,23 +91,14 @@ public class MainDataManager : MonoBehaviour
    }
    #region GetGameDatas
    
-   public IEnumerator GetGameDatas(Action<bool> OnCompleted, Action<GameDatas> OnCompletedDatas, string yearOrMonth, string date)
+   public IEnumerator GetGameDatas(Action<bool> OnCompleted, Action<GameDatas> OnCompletedDatas, string category, string date)
    {
-       yield return StartCoroutine(GetGameDatasCoroutine(OnCompleted, OnCompletedDatas, yearOrMonth, date));
+       yield return StartCoroutine(GetGameDatasCoroutine(OnCompleted, OnCompletedDatas, category, date));
    }
 
-   private IEnumerator GetGameDatasCoroutine(Action<bool> OnCompleted, Action<GameDatas> OnCompletedDatas, string yearOrMonth, string date)
+   private IEnumerator GetGameDatasCoroutine(Action<bool> OnCompleted, Action<GameDatas> OnCompletedDatas, string category, string date)
    {
-       string requestUrl = null;
-       switch (yearOrMonth)
-       {
-           case "year":
-               requestUrl = url + "GetMainGameDatasByYear?year=" + date;
-               break;
-           case "month":
-               requestUrl = url + "GetMainGameDatasByMonth?month=" + date;
-               break;
-       }
+       string requestUrl = url + "GetMainGameDatas?category=" + category + "&date=" + date;
        
        if (string.IsNullOrEmpty(requestUrl))
        {
@@ -137,27 +128,56 @@ public class MainDataManager : MonoBehaviour
            }
        }
    }
-   #endregion
    
-   #region GetGameDatas
-   
-   public IEnumerator GetLeaderBoard(Action<bool> OnCompleted,Action<WinRateData> OnCompletedDatas, string yearOrMonth, string date)
+   public IEnumerator GetMainDailyData(Action<bool> OnCompleted, Action<DailyGameData> OnCompletedDatas, string date)
    {
-       yield return StartCoroutine(GetLeaderBoardCoroutine(OnCompleted, OnCompletedDatas, yearOrMonth, date));
+       yield return StartCoroutine(GetMainDailyDataCoroutine(OnCompleted, OnCompletedDatas, date));
    }
 
-   private IEnumerator GetLeaderBoardCoroutine(Action<bool> OnCompleted,Action<WinRateData> OnCompletedDatas, string yearOrMonth, string date)
+   private IEnumerator GetMainDailyDataCoroutine(Action<bool> OnCompleted, Action<DailyGameData> OnCompletedDatas, string date)
    {
-       string requestUrl = null;
-       switch (yearOrMonth)
+       string requestUrl = url + "GetMainDailyData?date=" + date;
+       
+       if (string.IsNullOrEmpty(requestUrl))
        {
-            case "year":
-                requestUrl = url + "GetMainLeaderBoardByYear?year=" + date;
-                break;
-            case "month":
-                requestUrl = url + "GetMainLeaderBoardByMonth?month=" + date;
-                break;
+           Debug.LogError("GetMainDailyData 요청 URL이 null이거나 비어있습니다.");
+           OnCompleted?.Invoke(false);
+           OnCompletedDatas?.Invoke(null);
+           yield break;
        }
+
+       using (UnityWebRequest www = UnityWebRequest.Get(requestUrl))
+       {
+           yield return www.SendWebRequest();
+
+           if (www.result == UnityWebRequest.Result.Success)
+           {
+               string json = www.downloadHandler.text;
+               DailyGameData result = JsonConvert.DeserializeObject<DailyGameData>(json);
+               Debug.Log($"{date} 게임 데이터 조회 성공");
+               OnCompleted?.Invoke(true);
+               OnCompletedDatas?.Invoke(result);
+           }
+           else
+           {
+               Debug.LogError($"{date} 게임 데이터 조회 실패: {www.responseCode} - {www.error}");
+               OnCompleted?.Invoke(false);
+               OnCompletedDatas?.Invoke(null);
+           }
+       }
+   }
+   #endregion
+   
+   #region GetLeaderBoard
+   
+   public IEnumerator GetLeaderBoard(Action<bool> OnCompleted,Action<WinRateData> OnCompletedDatas, string category, string date)
+   {
+       yield return StartCoroutine(GetLeaderBoardCoroutine(OnCompleted, OnCompletedDatas, category, date));
+   }
+
+   private IEnumerator GetLeaderBoardCoroutine(Action<bool> OnCompleted,Action<WinRateData> OnCompletedDatas, string category, string date)
+   {
+       string requestUrl = url + "GetMainLeaderBoard?category=" + category + "&date=" + date;
        
        if (string.IsNullOrEmpty(requestUrl))
        {
