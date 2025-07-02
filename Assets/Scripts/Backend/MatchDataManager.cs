@@ -69,7 +69,6 @@ public class MatchDataManager : DataManager<MatchData>
     #endregion
     
     #endregion
-
     #region GetDataByRounds
     public IEnumerator GetMatchByRounds(Action<List<RefinedMatchData>> OnCompleted, int page = 1, int limit = 100)
     {
@@ -141,6 +140,49 @@ public class MatchDataManager : DataManager<MatchData>
     }
     #endregion
 
+    #region GetDailyMatches
+
+    public IEnumerator GetDailyMatches(Action<bool> OnCompleted, Action<List<RefinedMatchData>> OnCompletedDatas, string date)
+    {
+        string requestUrl = url + $"GetMatchesByDate?date=" + date;
+
+        if (string.IsNullOrEmpty(requestUrl))
+        {
+            Debug.LogError("GetMatchesByDate 요청 URL이 null이거나 비어있습니다.");
+            OnCompleted?.Invoke(false);
+            OnCompletedDatas?.Invoke(null);
+            yield break;
+        }
+
+        using (UnityWebRequest www = UnityWebRequest.Get(requestUrl))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                string json = www.downloadHandler.text;
+                MatchData[] result = JsonConvert.DeserializeObject<MatchData[]>(json);
+                // 라운드별로 그룹화
+                var grouped = result
+                    .GroupBy(m => m.round)
+                    .OrderByDescending(g => g.Key)
+                    .Select(g => g.ToArray())
+                    .ToArray();
+                
+                Debug.Log($"불러온 라운드 수: {grouped.Length}");
+                OnCompleted?.Invoke(true);
+                OnCompletedDatas?.Invoke(RefineAllMatchData(grouped));
+            }
+            else
+            {
+                Debug.LogError($"데이터 조회 실패: {www.responseCode} - {www.error}");
+                OnCompleted?.Invoke(false);
+                OnCompletedDatas?.Invoke(null);
+            }
+        }
+    }
+    #endregion
+    
     #region MatchData Exchanger
     
     /// <summary>

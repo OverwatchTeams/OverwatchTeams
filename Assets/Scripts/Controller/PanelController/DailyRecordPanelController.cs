@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,8 +9,12 @@ public class DailyRecordPanelController : PanelController
 {
     [SerializeField] private TMP_Dropdown _dateDropdown;
     [SerializeField] private GameObject _winRateRankContainer;
+    [SerializeField] private GameObject _dailyMatchContainer;
     [SerializeField] private GameObject _winRateRankPrefab;
+    [SerializeField] private GameObject _dailyMatchPrefab;
     [SerializeField] private List<ScrollRect> _scrollRects;
+    [SerializeField] private TMP_Text _totalRound;
+    [SerializeField] private TMP_Text _participantCount;
     
     private void OnEnable()
     {
@@ -71,7 +76,12 @@ public class DailyRecordPanelController : PanelController
         //랭크 불러오기 승률
         int i = 1;
         yield return StartCoroutine(DataController.instance.GetMainDailyData(date));
-        foreach (var rank in DataController.instance.DailyGameData.leaderBoard.byDay[date].winRate.total)
+
+        var sortedRole =  DataController.instance.DailyGameData.leaderBoard.byDay[date].winRate.total
+            .OrderByDescending(map => map.Value.wins - map.Value.losses)
+            .ToList();
+       
+        foreach (var rank in sortedRole)
         {
             GameObject go = Instantiate(_winRateRankPrefab, _winRateRankContainer.transform);
             WinRateRankPrefab rankInfo = go.GetComponent<WinRateRankPrefab>();
@@ -116,18 +126,45 @@ public class DailyRecordPanelController : PanelController
             }
             rankInfo._rank.text = i.ToString();
             rankInfo._name.text = rank.Key;
-            rankInfo._win.text = rank.Value.wins.ToString();
-            rankInfo._draw.text = rank.Value.draws.ToString();
-            rankInfo._lose.text = rank.Value.losses.ToString();
+            //하드코딩 수정 필요(재사용 하느라 순서가 변경되어있음)
+            rankInfo._lose.text = rank.Value.wins.ToString();
+            rankInfo._winRate.text = rank.Value.losses.ToString();
+            rankInfo._win.text = (rank.Value.wins - rank.Value.losses).ToString();
             int winRate = (int)Mathf.Round(rank.Value.winRate);
-            rankInfo._winRate.text = winRate.ToString();
+            rankInfo._draw.text = winRate.ToString();
+            if (int.Parse(rankInfo._win.text) >= 3 || int.Parse(rankInfo._win.text) <= -3)
+            {
+                foreach (var text in rankInfo.gameObject.GetComponentsInChildren<TMP_Text>())
+                {
+                    text.fontStyle = FontStyles.Underline;
+                }
+            }
             i++;
         }
+        _participantCount.text = (i-1).ToString();
     }
-    
+    private IEnumerator SetDailyMatchContainer(string date)
+    {
+        foreach (Transform child in _dailyMatchContainer.transform)
+        {
+            Destroy(child.gameObject);
+        }
+        
+        bool isSucceed = false;
+        List<RefinedMatchData> matchDatas = new List<RefinedMatchData>();
+        yield return StartCoroutine(MatchDataManager.instance.GetDailyMatches(success => isSucceed = success, datas => matchDatas = datas,  date));
+        _totalRound.text = matchDatas.Count.ToString();
+        foreach (var match in matchDatas)
+        {
+            GameObject go = Instantiate(_dailyMatchPrefab, _dailyMatchContainer.transform);
+            DailyMatchPrefab matchObject = go.GetComponent<DailyMatchPrefab>();
+            matchObject.SetDailyMatchPrefab(match);
+        }
+    }
     private void OnDropDownValueChanged(int value)
     {
         string date = _dateDropdown.options[value].text;
         StartCoroutine(SetWinRateContainer(date));
+        StartCoroutine(SetDailyMatchContainer(date));
     }
 }
