@@ -178,19 +178,30 @@ public class FindPlayerPanelController : PanelController
                 string value = sb.ToString();
                 foreach (var playerButton in _playerButtons)
                 {
-                    string playerName = playerButton.GetComponentInChildren<TMP_Text>().text;
-                    if (!string.IsNullOrWhiteSpace(playerName) && !string.IsNullOrWhiteSpace(value))
+                    List<string> playerNames = new List<string>();
+                    playerNames.Add(playerButton.GetComponent<PlayerButtonPrefab>().PlayerData.player);
+                    foreach (var playerName in playerButton.GetComponent<PlayerButtonPrefab>().PlayerData.subNames)
                     {
-                        playerName = playerName.Trim().ToLowerInvariant();
+                        playerNames.Add(playerName);
+                    }
+                    if (!string.IsNullOrWhiteSpace(value))
+                    {
                         value = value.Trim().ToLowerInvariant();
                         value = value.Replace("\u200B", "");
-                        if (playerName.Contains(value))
+                        foreach (var pName in playerNames)
                         {
-                            playerButton.SetActive(true);
-                        }
-                        else
-                        {
-                            playerButton.SetActive(false);
+                            if (!string.IsNullOrWhiteSpace(pName))
+                            {
+                                if (pName.Trim().ToLowerInvariant().Contains(value))
+                                {
+                                    playerButton.SetActive(true);
+                                    break;
+                                }
+                                else
+                                {
+                                    playerButton.SetActive(false);
+                                }      
+                            }
                         }
                     }
                     if (value == "")
@@ -207,7 +218,7 @@ public class FindPlayerPanelController : PanelController
     /// </summary>
     private void OnClickPlayer(GameObject go)
     {
-        OnPlayerClicked?.Invoke(go.GetComponentInChildren<TMP_Text>().text);
+        OnPlayerClicked?.Invoke(go.GetComponent<PlayerButtonPrefab>().PlayerData.player);
     }
     /// <summary>
     /// 플레이어 추가 시
