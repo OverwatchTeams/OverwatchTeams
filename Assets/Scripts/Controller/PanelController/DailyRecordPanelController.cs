@@ -25,8 +25,7 @@ public class DailyRecordPanelController : PanelController
     {
         base.Initialize();
         InitializeListeners();
-        InitializePanel();
-        OnDropDownValueChanged(_dateDropdown.value);
+        StartCoroutine(GetDropDownDates());
     }
     
     protected override void InitializeListeners()
@@ -153,6 +152,7 @@ public class DailyRecordPanelController : PanelController
         bool isSucceed = false;
         List<RefinedMatchData> matchDatas = new List<RefinedMatchData>();
         yield return StartCoroutine(MatchDataManager.instance.GetDailyMatches(success => isSucceed = success, datas => matchDatas = datas,  date));
+        yield return StartCoroutine(MainDataManager.instance.GetDropDownDates(success => isSucceed = success, DataController.instance.OnDropdownDatesLoaded));
         _totalRound.text = matchDatas.Count.ToString();
         foreach (var match in matchDatas)
         {
@@ -166,5 +166,19 @@ public class DailyRecordPanelController : PanelController
         string date = _dateDropdown.options[value].text;
         StartCoroutine(SetWinRateContainer(date));
         StartCoroutine(SetDailyMatchContainer(date));
+    }
+    
+    private IEnumerator GetDropDownDates()
+    {
+        yield return StartCoroutine(DataController.instance.GetDropdownDate(result =>
+        {
+            if (!result)
+            {
+                Debug.Log("Failed to get drop down dates");
+                ReturnToParentPanel();
+            }
+        }));
+        InitializePanel();
+        OnDropDownValueChanged(_dateDropdown.value);
     }
 }

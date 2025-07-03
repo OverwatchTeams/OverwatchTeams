@@ -107,8 +107,6 @@ public class DataController : MonoBehaviour
         _defaultProgressPopup.DescriptionValue = _informMessage.GetRandomMessage();
         yield return StartCoroutine(MapTypeDataManager.instance.GetAllData(success => isSucceed = success, OnMapTypeLoaded));
         if (!isSucceed) ErrorOccured("[903] Get MapTypes Failed");
-        yield return StartCoroutine(MainDataManager.instance.GetDropDownDates(success => isSucceed = success, OnDropdownDatesLoaded));
-        if (!isSucceed) ErrorOccured("[916] Get DropDownDates Failed");
         FinishLoading();
     }
     #endregion
@@ -289,8 +287,7 @@ public class DataController : MonoBehaviour
         yield return StartCoroutine(MatchDataManager.instance.AddData(success => isSucceed = success, match));
         if (!isSucceed) ErrorOccured("[911] CreateMatch Failed");
         OnCreated?.Invoke(isSucceed);
-        yield return StartCoroutine(MainDataManager.instance.GetDropDownDates(success => isSucceed = success, OnDropdownDatesLoaded));
-        if (!isSucceed) ErrorOccured("[916] Get DropDownDates Failed");
+        Debug.Log($"Add Data {isSucceed}");
         FinishLoading();
         UpdateMainAndPlayerDatas();
     }
@@ -355,9 +352,20 @@ public class DataController : MonoBehaviour
     #endregion
 
     #region DropDownData
-    private void OnDropdownDatesLoaded(RecordDropdownDate dropdownDates)
+    public void OnDropdownDatesLoaded(RecordDropdownDate dropdownDates)
     {
         _recordDropdownDates = dropdownDates;
+    }
+    
+    public IEnumerator GetDropdownDate(Action<bool> OnFinished)
+    {
+        bool isSucceed = false;
+        StartLoading();
+        _defaultProgressPopup.DescriptionValue = _informMessage.GetRandomMessage();
+        yield return StartCoroutine(MainDataManager.instance.GetDropDownDates(success => isSucceed = success, OnDropdownDatesLoaded));
+        OnFinished?.Invoke(isSucceed);
+        FinishLoading();
+        if (!isSucceed) ErrorOccured("[916] Get DropDownDates Failed");
     }
     #endregion
 }
