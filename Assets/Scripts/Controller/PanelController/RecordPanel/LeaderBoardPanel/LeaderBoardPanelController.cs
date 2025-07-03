@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -19,6 +20,8 @@ public class LeaderBoardPanelController : PanelController
     [SerializeField] private GameObject _winRateRankPrefab;
     [SerializeField] private GameObject _participantRankPrefab;
     [SerializeField] private List<ScrollRect> _scrollRects;
+    [SerializeField] private TMP_Text _totalRound;
+    [SerializeField] private TMP_Text _minRequiredRound;
     
     private void OnEnable()
     {
@@ -88,10 +91,14 @@ public class LeaderBoardPanelController : PanelController
         {
             Destroy(child.gameObject);
         }
-
+        
         //랭크 불러오기 승률
-        int i = 1;
         yield return StartCoroutine(DataController.instance.GetMainLeaderBoardData(category, date));
+        yield return StartCoroutine(DataController.instance.GetMainGameDatas(category, date));
+        _minRequiredRound.text = DataController.instance.GameDatas.minRequiredRound.ToString() + "경기";
+        _totalRound.text = DataController.instance.GameDatas.totalGames.ToString() + "경기";
+        
+        int i = 1;
         foreach (var rank in DataController.instance.WinRateData.winRate.total)
         {
             if (i > 10) break;
@@ -127,7 +134,7 @@ public class LeaderBoardPanelController : PanelController
             rankInfo._winRate.text = winRate.ToString();
             i++;
         }
-
+        
         //랭크 불러오기 참여율
         i = 1;
         foreach (var rank in DataController.instance.WinRateData.attendance.total)
