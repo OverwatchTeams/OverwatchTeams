@@ -73,7 +73,12 @@ public class GameResultPanelController : PanelController
         }
         //맵 리셋
         _mapButton.GetComponentInChildren<TMP_Text>().text = "-";
-        _date.text = DateTime.Now.ToString("yyyy-MM-dd");
+        
+        DateTime utcNow = DateTime.UtcNow; // 현재 UTC 시간
+        TimeZoneInfo estZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
+        DateTime estNow = TimeZoneInfo.ConvertTimeFromUtc(utcNow, estZone);
+        
+        _date.text = estNow.ToString("yyyy-MM-dd");
         _calendar.GetComponent<CalendarController>()._calendarPanel.SetActive(false);
     }
 
