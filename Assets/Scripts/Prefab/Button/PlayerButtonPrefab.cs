@@ -7,28 +7,33 @@ public class PlayerButtonPrefab : MonoBehaviour
 {
     [SerializeField] PlayerData playerData;
     [SerializeField] private Animator _animator;
-    [SerializeField] private SwipdownTextAnimation _swipdownTextAnimation;
+    //[SerializeField] private SwipdownTextAnimation _swipdownTextAnimation;
+    [SerializeField] private TMP_Text _name;
     public PlayerData PlayerData => playerData;
 
     public PlayerData SetPlayerData(PlayerData newPlayerData)
     {
-        StopAnimation();
+        //StopAnimation();
         playerData = newPlayerData;
-        List<string> playerNames = new List<string>();
+        _name.text = newPlayerData.player;
+        /*List<string> playerNames = new List<string>();
         playerNames.Add(playerData.player);
-        foreach (var pName in playerData.subNames)
+        if (playerData.subNames != null)
         {
-            playerNames.Add(pName);
+            foreach (var pName in playerData.subNames)
+            {
+                playerNames.Add(pName);
+            }   
         }
         _swipdownTextAnimation.SetTexts(playerNames);
-        StartAnimation();
+        StartAnimation();*/
         return playerData;
     }
 
-    private void StartAnimation()
+    /*private void StartAnimation()
     {
         if (playerData == null) return;
-        if (playerData.subNames.Count == 0) return;
+        if (playerData.subNames == null || playerData.subNames.Count == 0) return;
         if(_animator.enabled == false)
         {
             _animator.enabled = true;
@@ -37,7 +42,7 @@ public class PlayerButtonPrefab : MonoBehaviour
     }
     private void StopAnimation()
     {
-        if (playerData.subNames.Count == 0) return;
+        if (playerData.subNames == null || playerData.subNames.Count == 0) return;
         _animator.enabled = false;
     }
 
@@ -49,5 +54,5 @@ public class PlayerButtonPrefab : MonoBehaviour
     private void OnDisable()
     {
         StopAnimation();
-    }
+    }*/
 }

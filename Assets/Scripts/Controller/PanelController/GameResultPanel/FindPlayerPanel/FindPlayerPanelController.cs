@@ -91,7 +91,7 @@ public class FindPlayerPanelController : PanelController
         _dropdown.onValueChanged.AddListener(OnDropdownValueChanged);
     }
     
-    private void InitializePanel()
+    protected void InitializePanel()
     {
         _playerNameInputFieldText.text = "";
         _playerButtons.Clear();
@@ -108,14 +108,15 @@ public class FindPlayerPanelController : PanelController
         _scrollRect.verticalNormalizedPosition = 1f;
     }
 
-    public void FilterSelectedPlayer(Button[] buttons)
+    public  void FilterSelectedPlayer(Button[] buttons)
     {
         foreach (var button in buttons)
         {
+            string buttonName = button.GetComponentInChildren<TMP_Text>().text;
+            if (buttonName == "-") continue;
             foreach (var playerButton in _playerButtons)
             {
-                if (button.GetComponentInChildren<TMP_Text>().text ==
-                    playerButton.GetComponentInChildren<TMP_Text>().text)
+                if (playerButton.GetComponent<PlayerButtonPrefab>().PlayerData.player == buttonName)
                 {
                     playerButton.SetActive(false);
                 }
@@ -216,7 +217,7 @@ public class FindPlayerPanelController : PanelController
     /// <summary>
     /// 플레이어 선택 시
     /// </summary>
-    private void OnClickPlayer(GameObject go)
+    protected virtual void OnClickPlayer(GameObject go)
     {
         OnPlayerClicked?.Invoke(go.GetComponent<PlayerButtonPrefab>().PlayerData.player);
     }

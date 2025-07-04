@@ -12,7 +12,12 @@ public class SwipdownTextAnimation : MonoBehaviour
     
     private int _textIndex = 0;
     private int _containerIndex = 0;
-    
+
+    private void OnEnable()
+    {
+        _textIndex = 0;
+        _containerIndex = 0;
+    }
     public void SetTexts(List<string> texts)
     {
         _texts = texts;

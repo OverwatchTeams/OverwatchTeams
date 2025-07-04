@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,9 +22,13 @@ public class DailyRecordPanelController : PanelController
     private List<RefinedMatchData> _matchDatas;
     private string _sortedType;
     private Dictionary<string, int> _playerStreaks;
+    private bool _isMatchSupport = false;
+    private string[] _players;
     
     private void OnEnable()
     {
+        _isMatchSupport = false;
+        _players = null;
         Initialize();
     }
 
@@ -82,10 +87,11 @@ public class DailyRecordPanelController : PanelController
         
         //랭크 불러오기 승률
         yield return StartCoroutine(DataController.instance.GetMainDailyData(date));
-        UpdateWinRateContainer(date);
+        yield return UpdateWinRateContainer(date);
+        if(_isMatchSupport) FilterMatchPlayers();
     }
 
-    private void UpdateWinRateContainer(string date)
+    private IEnumerator UpdateWinRateContainer(string date)
     {
         //랭크표 컨테이너 초기화
         foreach (Transform child in _winRateRankContainer.transform)
@@ -175,6 +181,7 @@ public class DailyRecordPanelController : PanelController
             i++;
         }
         _participantCount.text = (i-1).ToString();
+        yield return null;
     }
     private IEnumerator SetDailyMatchContainer(string date)
     {
@@ -272,6 +279,36 @@ public class DailyRecordPanelController : PanelController
         }
 
         return streaks;
+    }
+
+    public void SetDailyMatchSupporter(string[] players)
+    {
+        _players = players;
+        _isMatchSupport = true;
+    }
+
+    private void FilterMatchPlayers()
+    {
+        foreach (Transform child in _winRateRankContainer.transform)
+        {
+            child.gameObject.SetActive(false);
+        }
+        if (!_winRateRankContainer.activeInHierarchy)
+            Debug.LogWarning("_winRateRankContainer의 부모가 비활성화 상태입니다.");
+        LayoutRebuilder.ForceRebuildLayoutImmediate(_winRateRankContainer.GetComponent<RectTransform>());
+        if( _players == null )Debug.Log("players is null");
+        foreach (string player in _players)
+        {
+            foreach (Transform child in _winRateRankContainer.transform)
+            {
+                if (child.gameObject.GetComponent<DailyWinRateRankPrefab>()._name.text == player)
+                {
+                    child.gameObject.SetActive(true);
+                    Debug.Log(child.gameObject.GetComponent<DailyWinRateRankPrefab>()._name.text);
+                    break;
+                }
+            }
+        }
     }
 
 }

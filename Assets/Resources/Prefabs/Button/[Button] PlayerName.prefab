@@ -277,6 +277,7 @@ MonoBehaviour:
     subNames: []
   _animator: {fileID: 7938562595563565457}
   _swipdownTextAnimation: {fileID: 6461355665250750926}
+  _name: {fileID: 5857530735139911544}
 --- !u!114 &1762733008188211127
 MonoBehaviour:
   m_ObjectHideFlags: 0

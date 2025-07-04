@@ -46,7 +46,7 @@ public class MainPanelController : PanelController
 
     private void OnClickTeamMakingButton()
     {
-        //OpenPanel("[PopupPanel] MakeTeamPanel");
+        OpenPanel("[PopupPanel] MakeTeamPanel");
     }
     private void OnClickGameResultButton()
     {
