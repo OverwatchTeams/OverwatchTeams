@@ -82,9 +82,6 @@ public class DailyRecordPanelController : PanelController
     
     private IEnumerator SetWinRateContainer(string date)
     {
-        //연승 데이터 계산
-        _playerStreaks = GetPlayerStreaks();
-        
         //랭크 불러오기 승률
         yield return StartCoroutine(DataController.instance.GetMainDailyData(date));
         yield return UpdateWinRateContainer(date);
@@ -100,22 +97,18 @@ public class DailyRecordPanelController : PanelController
         }
         
         int i = 1;
-        var sortedWinRate = new List<KeyValuePair<string, WinRateData.WinRate.PlayerWinRate>>();
+        var sortedWinRate = new List<KeyValuePair<string, DailyGameData.WinRateData.WinRate.PlayerWinRate>>();
         if (_sortedType == "gap")
         {
             sortedWinRate =  DataController.instance.DailyGameData.leaderBoard.byDay[date].winRate.total
-                .OrderByDescending(map => map.Value.wins - map.Value.losses)
+                .OrderByDescending(map => map.Value.gap)
                 .ToList();   
         }
         else if (_sortedType == "streak")
         {
-            var sortedStreaks = _playerStreaks
-                .OrderByDescending(pair => pair.Value)
-                .ToList();
-            foreach (var streak in sortedStreaks)
-            {
-                sortedWinRate.Add(new KeyValuePair<string, WinRateData.WinRate.PlayerWinRate>(streak.Key, DataController.instance.DailyGameData.leaderBoard.byDay[date].winRate.total[streak.Key]));
-            }
+            sortedWinRate = DataController.instance.DailyGameData.leaderBoard.byDay[date].winRate.total
+                .OrderByDescending(map => map.Value.streak)
+                .ToList();   
         }
         
         foreach (var rank in sortedWinRate)
@@ -139,8 +132,8 @@ public class DailyRecordPanelController : PanelController
 
             rankInfo._rank.text = i.ToString();
             rankInfo._name.text = rank.Key;
-            rankInfo._gap.text = (rank.Value.wins - rank.Value.losses).ToString();
-            rankInfo._streak.text = _playerStreaks[rank.Key].ToString();
+            rankInfo._gap.text = (rank.Value.gap).ToString();
+            rankInfo._streak.text = rank.Value.streak.ToString();
             int winRate = (int)Mathf.Round(rank.Value.winRate);
             rankInfo._winRate.text = winRate.ToString();
             rankInfo._win.text = rank.Value.wins.ToString();
@@ -204,13 +197,13 @@ public class DailyRecordPanelController : PanelController
     private void OnGapButtonClicked()
     {
         _sortedType = "gap";
-        UpdateWinRateContainer(_dateDropdown.options[_dateDropdown.value].text);
+        StartCoroutine(UpdateWinRateContainer(_dateDropdown.options[_dateDropdown.value].text));
     }
 
     private void OnStreakButtonClicked()
     {
         _sortedType = "streak";
-        UpdateWinRateContainer(_dateDropdown.options[_dateDropdown.value].text);
+        StartCoroutine(UpdateWinRateContainer(_dateDropdown.options[_dateDropdown.value].text));
     }
     private void OnDropDownValueChanged(int value)
     {
@@ -236,49 +229,6 @@ public class DailyRecordPanelController : PanelController
         }));
         InitializePanel();
         OnDropDownValueChanged(_dateDropdown.value);
-    }
-    
-    public Dictionary<string, int> GetPlayerStreaks()
-    {
-        var sortedMatches = _matchDatas.OrderByDescending(md => md.round).ToList();
-        Dictionary<string, int> streaks = new Dictionary<string, int>();
-
-        foreach (var match in sortedMatches)
-        {
-            for (int i = 0; i < match.players.Count; i++)
-            {
-                string playerName = match.players[i].Item1;
-                bool isBlueTeam = i < 5;
-                bool didWin = (isBlueTeam && match.winner == WinnerTeam.블루) ||
-                              (!isBlueTeam && match.winner == WinnerTeam.레드);
-                bool isDraw = match.winner == WinnerTeam.무승부;
-
-                if (isDraw) continue; // 무승부는 패스
-
-                int currentResult = didWin ? 1 : -1;
-
-                if (!streaks.ContainsKey(playerName))
-                {
-                    streaks[playerName] = currentResult;
-                }
-                else
-                {
-                    int prevStreak = streaks[playerName];
-                    // 같은 방향이면 누적
-                    if ((prevStreak > 0 && currentResult > 0) || (prevStreak < 0 && currentResult < 0))
-                    {
-                        streaks[playerName] += currentResult;
-                    }
-                    else
-                    {
-                        // 방향 다르면 중단
-                        continue;
-                    }
-                }
-            }
-        }
-
-        return streaks;
     }
 
     public void SetDailyMatchSupporter(string[] players)

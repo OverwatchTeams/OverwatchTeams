@@ -34,23 +34,70 @@ public enum WinnerTeam
     무승부
 }
 
-[System.Serializable]
+[Serializable]
 public class DailyGameData
 {
     public string updateDate;
     public GameDataContainer gameDatas;
     public LeaderBoardContainer leaderBoard;
     
-    [System.Serializable]
+    [Serializable]
     public class GameDataContainer
     {
         public Dictionary<string, GameDatas> byDay;
     }
     
-    [System.Serializable]
+    [Serializable]
     public class LeaderBoardContainer
     {
         public Dictionary<string, WinRateData> byDay;
+    }
+    
+    [Serializable]
+    public class WinRateData
+    {
+        public WinRate winRate; // 승률 데이터
+        public Attendance attendance; // 출석 데이터
+        
+        [Serializable]
+        public class WinRate
+        {
+            public Dictionary<string, PlayerWinRate> total; // Key는 플레이어 이름, Value는 승률 데이터
+            
+            [Serializable]
+            public class PlayerWinRate
+            {
+                public int ranking;
+                public float winRate;
+                public int wins;
+                public int draws;
+                public int losses;
+                public int gap;
+                public int streak;
+            }
+        }
+        
+        [Serializable]
+        public class Attendance
+        {
+            public Dictionary<string, AttendanceDetail> total; // Key는 플레이어 이름, Value는 출석 데이터
+            public Dictionary<string, MapAttendance> map; // 맵별 출석 데이터
+        
+            [Serializable]
+            public class AttendanceDetail
+            {
+                public int ranking;
+                public int playedGames;
+                public int totalGames;
+                public bool isMinRequired;
+            }
+            [Serializable]
+            public class MapAttendance
+            {
+                public int playedGames;
+                public int totalGames;
+            }
+        }
     }
 }
 [System.Serializable]
