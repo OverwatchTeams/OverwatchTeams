@@ -149,10 +149,11 @@ public class PlayerData
 {
     public string player;
     public bool? isClanMember;
+    public bool? isVoiceAvailable;
     public Date dates;
     public Scores scores;
-    public WinRate winRates;
     public List<string> subNames;
+    public WinRate winRates;
     public Dictionary<string, PositionSet> synergy;
 
     [Serializable]
@@ -186,6 +187,7 @@ public class PlayerData
             public GameDetail total;
             public Dictionary<string, GameDetail> map;
             public RoleGame role;
+            public RoleMapGame roleMap; 
 
             public class GameDetail
             {
@@ -201,6 +203,12 @@ public class PlayerData
                 public GameDetail D;
                 public GameDetail T;
                 public GameDetail H;
+            }
+            public class RoleMapGame
+            {
+                public Dictionary<string, GameDetail> D;
+                public Dictionary<string, GameDetail> T;
+                public Dictionary<string, GameDetail> H;
             }
         }
     }
