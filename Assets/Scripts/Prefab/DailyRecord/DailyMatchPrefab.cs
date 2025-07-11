@@ -12,7 +12,6 @@ public class DailyMatchPrefab : MonoBehaviour
 
     public void SetDailyMatchPrefab(RefinedMatchData matchData)
     {
-        int i = 0;
         _round.text = matchData.round.ToString();
         if (matchData.winner == WinnerTeam.블루)
         {
@@ -30,15 +29,13 @@ public class DailyMatchPrefab : MonoBehaviour
             _redCrown.SetActive(false);
         }
 
-        foreach (var player in matchData.players)
+        for (int i = 0; i < matchData.players.Count; i++)
         {
-            foreach (var findthing in DataController.instance.ClanPlayers)
+            foreach (var cachedPlayer in DataController.instance.ClanPlayers)
             {
-                if (findthing.player == player.Item1)
-                {
-                    _playerNames[i].SetPlayerData(findthing);
-                    i++;
-                }
+                if (cachedPlayer.player != matchData.players[i].Item1) continue;
+                _playerNames[i].SetPlayerData(cachedPlayer);
+                break;
             }
         }
     }
