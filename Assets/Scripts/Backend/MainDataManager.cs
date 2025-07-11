@@ -129,18 +129,18 @@ public class MainDataManager : MonoBehaviour
        }
    }
    
-   public IEnumerator GetMainDailyData(Action<bool> OnCompleted, Action<DailyGameData> OnCompletedDatas, string date)
+   public IEnumerator GetDailyGameData(Action<bool> OnCompleted, Action<DailyGameData> OnCompletedDatas, string date)
    {
-       yield return StartCoroutine(GetMainDailyDataCoroutine(OnCompleted, OnCompletedDatas, date));
+       yield return StartCoroutine(GetDailyGameDataCoroutine(OnCompleted, OnCompletedDatas, date));
    }
 
-   private IEnumerator GetMainDailyDataCoroutine(Action<bool> OnCompleted, Action<DailyGameData> OnCompletedDatas, string date)
+   private IEnumerator GetDailyGameDataCoroutine(Action<bool> OnCompleted, Action<DailyGameData> OnCompletedDatas, string date)
    {
        string requestUrl = url + "GetMainDailyData?date=" + date;
        
        if (string.IsNullOrEmpty(requestUrl))
        {
-           Debug.LogError("GetMainDailyData 요청 URL이 null이거나 비어있습니다.");
+           Debug.LogError("GetDailyGameData 요청 URL이 null이거나 비어있습니다.");
            OnCompleted?.Invoke(false);
            OnCompletedDatas?.Invoke(null);
            yield break;

@@ -144,11 +144,11 @@ public class MatchDataManager : DataManager<MatchData>
 
     public IEnumerator GetDailyMatches(Action<bool> OnCompleted, Action<List<RefinedMatchData>> OnCompletedDatas, string date)
     {
-        string requestUrl = url + $"GetMatchesByDate?date=" + date;
+        string requestUrl = url + $"GetDailyMatches?date=" + date;
 
         if (string.IsNullOrEmpty(requestUrl))
         {
-            Debug.LogError("GetMatchesByDate 요청 URL이 null이거나 비어있습니다.");
+            Debug.LogError("GetDailyMatches 요청 URL이 null이거나 비어있습니다.");
             OnCompleted?.Invoke(false);
             OnCompletedDatas?.Invoke(null);
             yield break;

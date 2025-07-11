@@ -10,16 +10,17 @@ public class MakeTeamPanelController : PanelController
 {
     [SerializeField] private Text _date;
     [SerializeField] private Button _mapButton;
-    [SerializeField] private Button[] _playerButtons;
+    [SerializeField] private GameObject[] _players;
+    private List<string> _cachedPlayers = new List<string>();
+    [SerializeField] private Button[] _teamCrownButtons;
+    [SerializeField] private Image[] _teamCrownIcons;
     [SerializeField] private Button _finishButton;
     [SerializeField] private Button _confirmCreateMatchButton;
     [SerializeField] private GameObject _calendar;
-    [SerializeField] private Button _openMatchSupportButton;
     [SerializeField] private Button _openFindPlayerButton;
 
     [SerializeField] private FindPlayerGroupPanelController _findPlayerGroupPanelController;
     [SerializeField] private FindMapPanelController _findMapPanelController;
-    [SerializeField] private MatchSupportPanelController _matchSupportPanelController;
     private MatchData _latestMatchData;
     private Button _tempClickedPlayerButton;
     private int currentCycle;
@@ -60,9 +61,22 @@ public class MakeTeamPanelController : PanelController
     private void InitializePanel()
     {
         //모든 플레이어 리셋
-        foreach (var button in _playerButtons)
+        for(int i = 0; i < _players.Length; i++)
         {
-            button.GetComponentInChildren<TMP_Text>().text = "-";
+            if (_cachedPlayers.Count != 0)
+            {
+                _players[i].GetComponentInChildren<TMP_Text>().text = _cachedPlayers[i];
+
+            }
+            else _players[i].GetComponentInChildren<TMP_Text>().text = "-";
+        }
+
+        //모든 팀 크라운 컬러 변경
+        foreach (var icon in _teamCrownIcons)
+        {
+            Color color = icon.color;
+            color.a = 0;
+            icon.color = color;
         }
 
         //맵 리셋
@@ -79,21 +93,19 @@ public class MakeTeamPanelController : PanelController
     protected override void InitializeListeners()
     {
         base.InitializeListeners();
-        foreach (var button in _playerButtons)
-        {
-            //드래그 드랍으로 바꿀 예정
-            /*button.onClick.RemoveListener();
-            button.onClick.AddListener();*/
-        }
 
+        foreach (var button in _teamCrownButtons)
+        {
+            button.onClick.RemoveListener(delegate { ChangeCrownTeam(button); });
+            button.onClick.AddListener(delegate { ChangeCrownTeam(button); });
+        }
+        
         _mapButton.onClick.RemoveListener(PopupFindMapTab);
         _finishButton.onClick.RemoveListener(PopupFinish);
         _mapButton.onClick.AddListener(PopupFindMapTab);
         _finishButton.onClick.AddListener(PopupFinish);
         _confirmCreateMatchButton.onClick.RemoveListener(CreateMatch);
         _confirmCreateMatchButton.onClick.AddListener(CreateMatch);
-        _openMatchSupportButton.onClick.RemoveListener(OpenMatchSupport);
-        _openMatchSupportButton.onClick.AddListener(OpenMatchSupport);
         _openFindPlayerButton.onClick.RemoveListener(OpenFindPlayer);
         _openFindPlayerButton.onClick.AddListener(OpenFindPlayer);
     }
@@ -106,47 +118,33 @@ public class MakeTeamPanelController : PanelController
         CloseAllPanel();
     }
 
-    private void OpenMatchSupport()
-    {
-        OpenPanel("[Panel] MatchSupport");
-        string[] names = _playerButtons
-            .Select(btn => btn.gameObject.GetComponentInChildren<TMP_Text>().text)
-            .ToArray();
-        _matchSupportPanelController.UpdatePlayers(names);
-        
-    }
-
     //FinPlayer 창 Open
     private void OpenFindPlayer()
     {
         OpenPanel("[Popup] FindPlayer");
-        Button[] buttons = new[] { 0, 5, 1, 6, 2, 7, 3, 8, 4, 9 }
-            .Select(i => _playerButtons[i])
-            .ToArray();
-        _findPlayerGroupPanelController.InitializePlayerPool(buttons);
+        _findPlayerGroupPanelController.InitializePlayerPool(_players, _mapButton.gameObject.GetComponentInChildren<TMP_Text>().text, _date.text);
     }
 
     //FindPlayer에서 업데이트된 Pool정보를 동기화
     private void UpdatePlayerPool(string[] foundPlayers)
     {
-        string[] playerPool = new[] { 0, 2, 4, 6, 8, 1, 3, 5, 7, 9 }
-            .Select(i => foundPlayers[i])
-            .ToArray();
+        string[] playerPool = foundPlayers;
         
-        for (int i = 0; i < _playerButtons.Length; i++)
+        
+        for (int i = 0; i < _players.Length; i++)
         {
-            _playerButtons[i].gameObject.GetComponentInChildren<TMP_Text>().text = playerPool[i];
+            _players[i].gameObject.GetComponentInChildren<TMP_Text>().text = playerPool[i];
+            _cachedPlayers = playerPool.ToList();
         }
     }
 
 private RefinedMatchData SetRefinedMatchData()
     {
-        
         List<(string, Role)> playerList = new List<(string, Role)>();
-        for (int i = 0; i < _playerButtons.Length; i++)
+        for (int i = 0; i < _players.Length; i++)
         {
             (string, Role) player;
-            player.Item1 = _playerButtons[i].GetComponentInChildren<TMP_Text>().text;
+            player.Item1 = _players[i].GetComponentInChildren<TMP_Text>().text;
             //딜러 player들 index
             if (i == 0 || i == 1 || i == 5 || i == 6)
             {
@@ -169,8 +167,8 @@ private RefinedMatchData SetRefinedMatchData()
             playerList.Add(player);
         }
 
-        //WinnerTeam winnerTeam;
-        //winnerTeam = GetWinner();
+        WinnerTeam winnerTeam;
+        winnerTeam = GetWinner();
         return new RefinedMatchData
         {
             beginIndex = beginIndex,
@@ -178,11 +176,11 @@ private RefinedMatchData SetRefinedMatchData()
             round = currentCycle,
             map = _mapButton.GetComponentInChildren<TMP_Text>().text,
             players = playerList,
-            //winner = winnerTeam
+            winner = winnerTeam
         };
     }
 
-    /*private WinnerTeam GetWinner()
+    private WinnerTeam GetWinner()
     {
         for (int i = 0; i < _teamCrownIcons.Length; i++)
         {
@@ -201,11 +199,30 @@ private RefinedMatchData SetRefinedMatchData()
             }
         }
         return WinnerTeam.무승부;
-    }*/
+    }
 
     private void PopupFindMapTab()
     {
         OpenPanel("[Popup] FindMap");
+    }
+    
+    private void ChangeCrownTeam(Button button)
+    {
+        for (int i = 0; i < _teamCrownButtons.Length; i++)
+        {
+            if (button == _teamCrownButtons[i])
+            {
+                Color color = _teamCrownIcons[i].color;
+                color.a = 1;
+                _teamCrownIcons[i].color = color;
+            }
+            else
+            {
+                Color color = _teamCrownIcons[i].color;
+                color.a = 0;
+                _teamCrownIcons[i].color = color;
+            }
+        }
     }
 
     private void PopupFinish()
@@ -216,12 +233,12 @@ private RefinedMatchData SetRefinedMatchData()
             ErrorMessage.Instance.SetOwner(this.gameObject);
             ErrorMessage.Instance.SetDescription("맵을 선택해주세요");
         }
-        /*else if (!CheckWinnerSavable())
+        else if (!CheckWinnerSavable())
         {
             OpenPanel("[PopupPanel] ErrorPopup", false);
             ErrorMessage.Instance.SetOwner(this.gameObject);
             ErrorMessage.Instance.SetDescription("승자를 선택해주세요");
-        }*/
+        }
         else if (!CheckPlayerSavable())
         {
             OpenPanel("[PopupPanel] ErrorPopup", false);
@@ -272,7 +289,7 @@ private RefinedMatchData SetRefinedMatchData()
         return false;
     }
 
-    /*private bool CheckWinnerSavable()
+    private bool CheckWinnerSavable()
     {
         int activeCrownCount = 0;
         foreach (var icon in _teamCrownIcons)
@@ -287,13 +304,13 @@ private RefinedMatchData SetRefinedMatchData()
             return true;
         }
         return false;
-    }*/
+    }
 
     private bool CheckPlayerSavable()
     {
-        foreach (var playerbutton in _playerButtons)
+        foreach (var player in _players)
         {
-            if (playerbutton.GetComponentInChildren<TMP_Text>().text == "-")
+            if (player.GetComponentInChildren<TMP_Text>().text == "-")
                 return false;
         }
 

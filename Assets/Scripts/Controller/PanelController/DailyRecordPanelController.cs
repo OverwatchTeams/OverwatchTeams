@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using RainbowArt.CleanFlatUI;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,17 +19,19 @@ public class DailyRecordPanelController : PanelController
     [SerializeField] private TMP_Text _participantCount;
     [SerializeField] private Button _gapButton;
     [SerializeField] private Button _streakButton;
-
-    private List<RefinedMatchData> _matchDatas;
+    [SerializeField] private ProgressBarLoop _circularProgressPopup;
+    [SerializeField] private Toggle _toggleAll;
+    
     private string _sortedType;
     private Dictionary<string, int> _playerStreaks;
     private bool _isMatchSupport = false;
     private string[] _players;
+    private bool _isInitialized = false;
+    private List<RefinedMatchData> _dailyMatches;
+    private DailyGameData _dailyGameData;
     
     private void OnEnable()
     {
-        _isMatchSupport = false;
-        _players = null;
         Initialize();
     }
 
@@ -36,8 +39,13 @@ public class DailyRecordPanelController : PanelController
     {
         base.Initialize();
         InitializeListeners();
+        InitializePanel();
+        _isInitialized = false;
+        _dailyGameData = DataController.instance.DailyGameData;
+        _dailyMatches = DataController.instance.RefinedMatches;
         _sortedType = "gap";
-        StartCoroutine(GetDropDownDates());
+        _toggleAll.isOn = false;
+        StartCoroutine(GetDailyInform(_dateDropdown.options[_dateDropdown.value].text));
     }
     
     protected override void InitializeListeners()
@@ -49,6 +57,8 @@ public class DailyRecordPanelController : PanelController
         _gapButton.onClick.AddListener(OnGapButtonClicked);
         _streakButton.onClick.RemoveListener(OnStreakButtonClicked);
         _streakButton.onClick.AddListener(OnStreakButtonClicked);
+        _toggleAll.onValueChanged.RemoveListener(OnToggleAllClicked);
+        _toggleAll.onValueChanged.AddListener(OnToggleAllClicked);
     }
 
     private void InitializePanel()
@@ -79,14 +89,6 @@ public class DailyRecordPanelController : PanelController
 
         yield return null;
     }
-    
-    private IEnumerator SetWinRateContainer(string date)
-    {
-        //랭크 불러오기 승률
-        yield return StartCoroutine(DataController.instance.GetMainDailyData(date));
-        yield return UpdateWinRateContainer(date);
-        if(_isMatchSupport) FilterMatchPlayers();
-    }
 
     private IEnumerator UpdateWinRateContainer(string date)
     {
@@ -100,13 +102,13 @@ public class DailyRecordPanelController : PanelController
         var sortedWinRate = new List<KeyValuePair<string, DailyGameData.WinRateData.WinRate.PlayerWinRate>>();
         if (_sortedType == "gap")
         {
-            sortedWinRate =  DataController.instance.DailyGameData.leaderBoard.byDay[date].winRate.total
+            sortedWinRate =  _dailyGameData.leaderBoard.byDay[date].winRate.total
                 .OrderByDescending(map => map.Value.gap)
                 .ToList();   
         }
         else if (_sortedType == "streak")
         {
-            sortedWinRate = DataController.instance.DailyGameData.leaderBoard.byDay[date].winRate.total
+            sortedWinRate = _dailyGameData.leaderBoard.byDay[date].winRate.total
                 .OrderByDescending(map => map.Value.streak)
                 .ToList();   
         }
@@ -129,15 +131,13 @@ public class DailyRecordPanelController : PanelController
                     image.sprite = Resources.Load<Sprite>("Images/backGround_table03");
                 }
             }
-
-            rankInfo._rank.text = i.ToString();
+            
             rankInfo._name.text = rank.Key;
             rankInfo._gap.text = (rank.Value.gap).ToString();
             rankInfo._streak.text = rank.Value.streak.ToString();
             int winRate = (int)Mathf.Round(rank.Value.winRate);
             rankInfo._winRate.text = winRate.ToString();
-            rankInfo._win.text = rank.Value.wins.ToString();
-            rankInfo._lose.text = rank.Value.losses.ToString();
+            rankInfo._result.text = rank.Value.wins + "/" + rank.Value.draws + "/" + rank.Value.losses;
             
             if (i % 2 == 0 && 
                 (_sortedType == "gap" && int.Parse(rankInfo._gap.text) > 1 || 
@@ -175,23 +175,24 @@ public class DailyRecordPanelController : PanelController
         }
         _participantCount.text = (i-1).ToString();
         yield return null;
+        if(_isMatchSupport && !_toggleAll.isOn) FilterMatchPlayers();
     }
-    private IEnumerator SetDailyMatchContainer(string date)
+    private IEnumerator UpdateDailyMatchContainer()
     {
         foreach (Transform child in _dailyMatchContainer.transform)
         {
             Destroy(child.gameObject);
         }
         
-        bool isSucceed = false;
-        yield return StartCoroutine(MatchDataManager.instance.GetDailyMatches(success => isSucceed = success, datas => _matchDatas = datas,  date));
-        _totalRound.text = _matchDatas.Count.ToString();
-        foreach (var match in _matchDatas)
+        _totalRound.text = _dailyMatches.Count.ToString();
+        foreach (var match in _dailyMatches)
         {
             GameObject go = Instantiate(_dailyMatchPrefab, _dailyMatchContainer.transform);
             DailyMatchPrefab matchObject = go.GetComponent<DailyMatchPrefab>();
             matchObject.SetDailyMatchPrefab(match);
         }
+
+        yield return null;
     }
 
     private void OnGapButtonClicked()
@@ -211,25 +212,26 @@ public class DailyRecordPanelController : PanelController
         StartCoroutine(GetDailyInform(date));
     }
 
+    private void OnToggleAllClicked(bool value)
+    {
+        StartCoroutine(UpdateWinRateContainer(_dateDropdown.options[_dateDropdown.value].text));
+    }
+
     private IEnumerator GetDailyInform(string date)
     {
-        yield return StartCoroutine(SetDailyMatchContainer(date));
-        yield return StartCoroutine(SetWinRateContainer(date));
+        //첫 로딩을 제외한 경우 데이터를 새로 로드
+        if (_isInitialized)
+        {
+            _circularProgressPopup.gameObject.SetActive(true);
+            yield return StartCoroutine(MatchDataManager.instance.GetDailyMatches(null, matches => _dailyMatches = matches, date));
+            yield return StartCoroutine(MainDataManager.instance.GetDailyGameData(null, data => _dailyGameData = data, date));
+            _circularProgressPopup.gameObject.SetActive(false);
+        }
+        yield return StartCoroutine(UpdateDailyMatchContainer());
+        yield return StartCoroutine(UpdateWinRateContainer(date));
+        _isInitialized = true;
     }
     
-    private IEnumerator GetDropDownDates()
-    {
-        yield return StartCoroutine(DataController.instance.GetDropdownDate(result =>
-        {
-            if (!result)
-            {
-                Debug.Log("Failed to get drop down dates");
-                ReturnToParentPanel();
-            }
-        }));
-        InitializePanel();
-        OnDropDownValueChanged(_dateDropdown.value);
-    }
 
     public void SetDailyMatchSupporter(string[] players)
     {
@@ -243,10 +245,6 @@ public class DailyRecordPanelController : PanelController
         {
             child.gameObject.SetActive(false);
         }
-        if (!_winRateRankContainer.activeInHierarchy)
-            Debug.LogWarning("_winRateRankContainer의 부모가 비활성화 상태입니다.");
-        LayoutRebuilder.ForceRebuildLayoutImmediate(_winRateRankContainer.GetComponent<RectTransform>());
-        if( _players == null )Debug.Log("players is null");
         foreach (string player in _players)
         {
             foreach (Transform child in _winRateRankContainer.transform)
@@ -254,7 +252,6 @@ public class DailyRecordPanelController : PanelController
                 if (child.gameObject.GetComponent<DailyWinRateRankPrefab>()._name.text == player)
                 {
                     child.gameObject.SetActive(true);
-                    Debug.Log(child.gameObject.GetComponent<DailyWinRateRankPrefab>()._name.text);
                     break;
                 }
             }
