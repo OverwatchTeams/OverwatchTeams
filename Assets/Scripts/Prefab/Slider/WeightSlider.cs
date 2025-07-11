@@ -20,4 +20,14 @@ public class WeightSlider : MonoBehaviour
     {
         CurrentNumber.text = ((int)value).ToString();
     }
+
+    public void SetSliderValue(float value)
+    {
+        slider.value = value;
+    }
+
+    public float GetSliderValue()
+    {
+        return slider.value;
+    }
 }

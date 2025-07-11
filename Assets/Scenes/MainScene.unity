@@ -11837,6 +11837,15 @@ MonoBehaviour:
   - {fileID: 935969641}
   _editButton: {fileID: 1917628457}
   _editFinishButton: {fileID: 1514519336}
+  _playerData:
+    player: 
+    dates:
+      lastRound: 0
+    scores:
+      D: 0
+      T: 0
+      H: 0
+    subNames: []
 --- !u!1 &348170645
 GameObject:
   m_ObjectHideFlags: 0
@@ -12494,7 +12503,7 @@ MonoBehaviour:
   _mapSlider: {fileID: 557792641}
   _dealerSlider: {fileID: 2055456059}
   _tankerSlider: {fileID: 76303265}
-  _healderSlider: {fileID: 575099566}
+  _healerSlider: {fileID: 575099566}
   _voiceWeight: {fileID: 354885484}
   _roleWeight: {fileID: 1601942990}
   _mapWeight: {fileID: 557792642}
