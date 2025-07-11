@@ -12,7 +12,6 @@ public class RecordsPanelController : PanelController
     private void OnEnable()
     {
         Initialize();
-        GetDropDownDates();
     }
     
     protected override void Initialize()
@@ -46,17 +45,5 @@ public class RecordsPanelController : PanelController
     private void OnClickPlayerStatisticsButton()
     {
         OpenPanel("[PopupPanel] PersonalRecord");
-    }
-    
-    private void GetDropDownDates()
-    {
-        StartCoroutine(DataController.instance.GetDropdownDate(result =>
-        {
-            if (!result)
-            {
-                Debug.Log("Failed to get drop down dates");
-                ReturnToParentPanel();
-            }
-        }));
     }
 }
