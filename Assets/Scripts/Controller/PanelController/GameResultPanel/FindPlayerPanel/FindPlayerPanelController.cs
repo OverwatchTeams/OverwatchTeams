@@ -23,6 +23,7 @@ public class FindPlayerPanelController : PanelController
     [SerializeField] private bool _isClanMember = true;
     
     public List<GameObject> _playerButtons = new List<GameObject>();
+    private Queue<GameObject> _buttonPool = new Queue<GameObject>();
 
     private string _prevText = "";
     
@@ -90,6 +91,26 @@ public class FindPlayerPanelController : PanelController
         _dropdown.onValueChanged.RemoveListener(OnDropdownValueChanged);
         _dropdown.onValueChanged.AddListener(OnDropdownValueChanged);
     }
+
+    private GameObject GetButton()
+    {
+        if (_buttonPool.Count > 0)
+        {
+            var button = _buttonPool.Dequeue();
+            button.SetActive(true);
+            return button;
+        }
+        else
+        {
+            return Instantiate(_playerPrefab, _playerContainer.transform, false);
+        }
+    }
+
+    private void ReleaseButton(GameObject button)
+    {
+        button.SetActive(false);
+        _buttonPool.Enqueue(button);
+    }
     
     protected void InitializePanel()
     {
@@ -97,26 +118,26 @@ public class FindPlayerPanelController : PanelController
         _playerButtons.Clear();
         foreach (Transform child in _playerContainer.transform)
         {
-            Destroy(child.gameObject);
+            ReleaseButton(child.gameObject);
         }
         
         _dropdown.ClearOptions();
         _dropdown.options.Add(new TMP_Dropdown.OptionData("최근 참여 순"));
         _dropdown.options.Add(new TMP_Dropdown.OptionData("사전 순"));
-        
+        float t = Time.realtimeSinceStartup;
         Canvas.ForceUpdateCanvases();
         _scrollRect.verticalNormalizedPosition = 1f;
     }
 
-    public  void FilterSelectedPlayer(Button[] buttons)
+    public void FilterSelectedPlayer(GameObject[] players)
     {
-        foreach (var button in buttons)
+        foreach (var player in players)
         {
-            string buttonName = button.GetComponentInChildren<TMP_Text>().text;
-            if (buttonName == "-") continue;
+            string playerName = player.GetComponentInChildren<TMP_Text>().text;
+            if (playerName == "-") continue;
             foreach (var playerButton in _playerButtons)
             {
-                if (playerButton.GetComponent<PlayerButtonPrefab>().PlayerData.player == buttonName)
+                if (playerButton.GetComponent<PlayerButtonPrefab>().PlayerData.player == playerName)
                 {
                     playerButton.SetActive(false);
                 }

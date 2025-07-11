@@ -11,7 +11,7 @@ public class GameResultPanelController : PanelController
     [SerializeField] private Text _date;
     [SerializeField] private TMP_Text _round;
     [SerializeField] private Button _mapButton;
-    [SerializeField] private Button[] _playerButtons;
+    [SerializeField] private GameObject[] _players;
     [SerializeField] private Button[] _teamCrownButtons;
     [SerializeField] private Image[] _teamCrownIcons;
     [SerializeField] private Button _finishButton;
@@ -21,7 +21,7 @@ public class GameResultPanelController : PanelController
     [SerializeField] private FindPlayerPanelController _findPlayerPanelController;
     [SerializeField] private FindMapPanelController _findMapPanelController;
     private MatchData _latestMatchData;
-    private Button _tempClickedPlayerButton;
+    private GameObject _tempClickedPlayer;
     private int currentCycle;
     private int beginIndex;
 
@@ -59,9 +59,9 @@ public class GameResultPanelController : PanelController
     private void InitializePanel()
     {
         //모든 플레이어 리셋
-        foreach (var button in _playerButtons)
+        foreach (var player in _players)
         {
-            button.GetComponentInChildren<TMP_Text>().text = "-";
+            player.GetComponentInChildren<TMP_Text>().text = "-";
         }
 
         //모든 팀 크라운 컬러 변경
@@ -85,10 +85,10 @@ public class GameResultPanelController : PanelController
     protected override void InitializeListeners()
     {
         base.InitializeListeners();
-        foreach (var button in _playerButtons)
+        foreach (var player in _players)
         {
-            button.onClick.RemoveListener(delegate { PopupFindPlayerTab(button); });
-            button.onClick.AddListener(delegate { PopupFindPlayerTab(button); });
+            player.GetComponent<Button>().onClick.RemoveListener(delegate { PopupFindPlayerTab(player); });
+            player.GetComponent<Button>().onClick.AddListener(delegate { PopupFindPlayerTab(player); });
         }
 
         foreach (var button in _teamCrownButtons)
@@ -114,7 +114,7 @@ public class GameResultPanelController : PanelController
     
     private void ChangePlayer(string playerName)
     {
-        _tempClickedPlayerButton.GetComponentInChildren<TMP_Text>().text = playerName;
+        _tempClickedPlayer.GetComponentInChildren<TMP_Text>().text = playerName;
         CloseAllPanel();
     }
 
@@ -122,10 +122,10 @@ public class GameResultPanelController : PanelController
     {
         
         List<(string, Role)> playerList = new List<(string, Role)>();
-        for (int i = 0; i < _playerButtons.Length; i++)
+        for (int i = 0; i < _players.Length; i++)
         {
             (string, Role) player;
-            player.Item1 = _playerButtons[i].GetComponentInChildren<TMP_Text>().text;
+            player.Item1 = _players[i].GetComponentInChildren<TMP_Text>().text;
             //딜러 player들 index
             if (i == 0 || i == 1 || i == 5 || i == 6)
             {
@@ -183,11 +183,11 @@ public class GameResultPanelController : PanelController
     }
     
     
-    private void PopupFindPlayerTab(Button button)
+    private void PopupFindPlayerTab(GameObject player)
     {
-        _tempClickedPlayerButton = button;
+        _tempClickedPlayer = player;
         OpenPanel("[Popup] FindPlayer");
-        _findPlayerPanelController.FilterSelectedPlayer(_playerButtons);
+        _findPlayerPanelController.FilterSelectedPlayer(_players);
     }
 
     private void PopupFindMapTab()
@@ -297,9 +297,9 @@ public class GameResultPanelController : PanelController
 
     private bool CheckPlayerSavable()
     {
-        foreach (var playerbutton in _playerButtons)
+        foreach (var player in _players)
         {
-            if (playerbutton.GetComponentInChildren<TMP_Text>().text == "-")
+            if (player.GetComponentInChildren<TMP_Text>().text == "-")
                 return false;
         }
 
