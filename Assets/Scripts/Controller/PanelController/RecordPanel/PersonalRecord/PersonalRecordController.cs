@@ -10,10 +10,15 @@ public class PersonalRecordController : PanelController
 {
     [SerializeField] private TMP_Text _playerName;
     [SerializeField] private Toggle _isClanPlayerToggle;
+    [SerializeField] private Toggle _isVoiceAvailable;
     [SerializeField] private GameObject _subNamesContainer;
     [SerializeField] private GameObject _subNamePrefab;
     [SerializeField] private TMP_Text _firstAttendance;
     [SerializeField] private TMP_Text _lastAttendance;
+    [SerializeField] private TMP_InputField _dealerInputField;
+    [SerializeField] private TMP_InputField _tankerInputField;
+    [SerializeField] private TMP_InputField _healerInputField;
+    [SerializeField] private GameObject _editLayer;
     
     // 연도 월별 승률 테이블 셋
     [SerializeField] private GameObject _dateCategorySelector;
@@ -42,8 +47,10 @@ public class PersonalRecordController : PanelController
     [SerializeField] private FindPlayerPanelController _findPlayerPanelController;
     [SerializeField] private ModalWindow _warningPopup;
     [SerializeField] private List<ScrollRect> _scrollRects;
+    [SerializeField] private Button _editButton;
+    [SerializeField] private Button _editFinishButton;
     
-    private PlayerData _playerData;
+    public PlayerData _playerData;
     private List<string> _yearItems = new List<string>();
     private List<string> _monthItems = new List<string>();
     private string _winRateFilter = "map";
@@ -59,6 +66,14 @@ public class PersonalRecordController : PanelController
         _playerData = new PlayerData();
         _findPlayerPanelController.OnPlayerClicked -= ChangePlayer;
         _findPlayerPanelController.OnPlayerClicked += ChangePlayer;
+        _editButton.gameObject.SetActive(false);
+        _editFinishButton.gameObject.SetActive(false);
+        _editLayer.SetActive(false);
+        _isVoiceAvailable.interactable = false;
+        _isClanPlayerToggle.interactable = false;
+        _dealerInputField.interactable = false;
+        _tankerInputField.interactable = false;
+        _healerInputField.interactable = false;
         Initialize();
     }
     
@@ -111,7 +126,23 @@ public class PersonalRecordController : PanelController
         _synergyTableWinRateButton.onClick.RemoveListener(OnSynergyTableWinRateClicked);
         _synergyTableWinRateButton.onClick.AddListener(OnSynergyTableWinRateClicked);
         
+        _editButton.onClick.RemoveListener(OnEditButtonClicked);
+        _editButton.onClick.AddListener(OnEditButtonClicked);
+        _editFinishButton.onClick.RemoveListener(OnFinishEditButtonClicked);
+        _editFinishButton.onClick.AddListener(OnFinishEditButtonClicked);
         
+        _isClanPlayerToggle.onValueChanged.RemoveListener(OnClanValueChanged);
+        _isClanPlayerToggle.onValueChanged.AddListener(OnClanValueChanged);
+        
+        _isVoiceAvailable.onValueChanged.RemoveListener(OnVoiceValueChanged);
+        _isVoiceAvailable.onValueChanged.AddListener(OnVoiceValueChanged);
+        
+        _dealerInputField.onEndEdit.RemoveListener(OnDealerValueChanged);
+        _dealerInputField.onEndEdit.AddListener(OnDealerValueChanged);
+        _tankerInputField.onEndEdit.RemoveListener(OnTankerValueChanged);
+        _tankerInputField.onEndEdit.AddListener(OnTankerValueChanged);
+        _healerInputField.onEndEdit.RemoveListener(OnHealerValueChanged);
+        _healerInputField.onEndEdit.AddListener(OnHealerValueChanged);
     }
 
     private void InitializeDefaultInfo()
@@ -124,6 +155,7 @@ public class PersonalRecordController : PanelController
         if (_playerData.player == null)
         {
             _playerName.GetComponentInChildren<TMP_Text>().text = "-";
+            _isClanPlayerToggle.isOn = true;
             _isClanPlayerToggle.isOn = true;
         }
         else
@@ -138,6 +170,18 @@ public class PersonalRecordController : PanelController
             }   
             _playerName.GetComponentInChildren<TMP_Text>().text = _playerData.player;
             _isClanPlayerToggle.SetIsOnWithoutNotify(_playerData.isClanMember ?? false);
+            _isVoiceAvailable.SetIsOnWithoutNotify(_playerData.isVoiceAvailable ?? false);
+            
+            _dealerInputField.text = ((float)_playerData.scores.D / 100 % 1 == 0)
+                ? ((int)((float)_playerData.scores.T / 100)).ToString()
+                : string.Format($"{(float)_playerData.scores.D / 100:0.##}");
+            _tankerInputField.text = ((float)_playerData.scores.T / 100 % 1 == 0)
+                ? ((int)((float)_playerData.scores.D / 100)).ToString()
+                : string.Format($"{(float)_playerData.scores.T / 100:0.##}");
+            _healerInputField.text = ((float)_playerData.scores.H / 100 % 1 == 0)
+                ? ((int)((float)_playerData.scores.H / 100)).ToString()
+                : string.Format($"{(float)_playerData.scores.H / 100:0.##}");
+            
             _firstAttendance.text = _playerData.dates.first.ToString("yyyy년 MM월 dd일");
             _lastAttendance.text = _playerData.dates.last.ToString("yyyy년 MM월 dd일");
         }
@@ -234,6 +278,7 @@ public class PersonalRecordController : PanelController
     private void ChangePlayer(string playerName)
     {
         _playerName.text = playerName;
+        _editButton.gameObject.SetActive(true);
         StartCoroutine(SetSpecificRecord(playerName));
     }
 
@@ -332,6 +377,79 @@ public class PersonalRecordController : PanelController
     {
         _synergyFilter = "winRate";
         SetSynergyContainer();
+    }
+
+    private void OnEditButtonClicked()
+    {
+        _editButton.gameObject.SetActive(false);
+        _editFinishButton.gameObject.SetActive(true);
+        
+        _isVoiceAvailable.interactable = true;
+        _isClanPlayerToggle.interactable = true;
+        _dealerInputField.interactable = true;
+        _tankerInputField.interactable = true;
+        _healerInputField.interactable = true;
+        _editLayer.SetActive(true);
+    }
+    
+    private void OnFinishEditButtonClicked()
+    {
+        _editButton.gameObject.SetActive(true);
+        _editFinishButton.gameObject.SetActive(false);
+        
+        _isVoiceAvailable.interactable = false;
+        _isClanPlayerToggle.interactable = false;
+        _dealerInputField.interactable = false;
+        _tankerInputField.interactable = false;
+        _healerInputField.interactable = false;
+        PlayerData playerData = new PlayerData();
+        playerData.player = _playerData.player;
+        playerData.scores = new PlayerData.Scores();
+        
+        playerData.scores.D = _playerData.scores.D;
+        playerData.scores.T = _playerData.scores.T;
+        playerData.scores.H = _playerData.scores.H;
+        
+        playerData.isVoiceAvailable = _playerData.isVoiceAvailable;
+        playerData.isClanMember = _playerData.isClanMember;
+        StartCoroutine(DataController.instance.CreatePlayer(null, playerData));
+        
+        _dealerInputField.text = ((float)_playerData.scores.D / 100 % 1 == 0)
+            ? ((int)((float)_playerData.scores.D / 100)).ToString()
+            : string.Format($"{(float)_playerData.scores.D / 100:0.##}");
+        _tankerInputField.text = ((float)_playerData.scores.T / 100 % 1 == 0)
+            ? ((int)((float)_playerData.scores.T / 100)).ToString()
+            : string.Format($"{(float)_playerData.scores.T / 100:0.##}");
+        _healerInputField.text = ((float)_playerData.scores.H / 100 % 1 == 0)
+            ? ((int)((float)_playerData.scores.H / 100)).ToString()
+            : string.Format($"{(float)_playerData.scores.H / 100:0.##}");
+        
+        _editLayer.SetActive(false);
+    }
+
+    private void OnVoiceValueChanged(bool value)
+    {
+        _playerData.isVoiceAvailable = value;
+    }
+    
+    private void OnClanValueChanged(bool value)
+    {
+        _playerData.isClanMember = value;
+    }
+    
+    private void OnDealerValueChanged(string value)
+    {
+        _playerData.scores.D = (int)(float.Parse(value) * 100);
+    }
+    
+    private void OnTankerValueChanged(string value)
+    {
+        _playerData.scores.T = (int)(float.Parse(value) * 100);
+    }
+    
+    private void OnHealerValueChanged(string value)
+    {
+        _playerData.scores.H = (int)(float.Parse(value) * 100);
     }
 
     private void SetMapWinRateContainer()

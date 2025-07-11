@@ -72,10 +72,6 @@ public class PlayerButtonPrefab : MonoBehaviour, IPointerClickHandler
                     }
                     break;
             }
-            Debug.Log($"{data.player} : {data.scores.D.ToString()}");
-            Debug.Log($"{data.player} : {data.scores.T.ToString()}");
-            Debug.Log($"{data.player} : {data.scores.H.ToString()}");
-            
             StartCoroutine(DataController.instance.CreatePlayer(null, data));
         }
     }
