@@ -47,12 +47,16 @@ public class FindPlayerGroupPanelController : FindPlayerPanelController
 
         _dailyRecordButton.onClick.RemoveListener(OnClickDailyRecordButton);
         _dailyRecordButton.onClick.AddListener(OnClickDailyRecordButton);
-        DataController.instance.OnCreatePlayerFininshed -= StartUpdatePlayerPool;
         DataController.instance.OnCreatePlayerFininshed += StartUpdatePlayerPool;
         _resetButton.onClick.RemoveListener(OnClickResetButton);
         _resetButton.onClick.AddListener(OnClickResetButton);
     }
-    
+
+    private void OnDisable()
+    {
+        DataController.instance.OnCreatePlayerFininshed -= StartUpdatePlayerPool;
+    }
+
     public void InitializePlayerPool(GameObject[] players, string map, string day)
     {
         _selectedButton01 = null;

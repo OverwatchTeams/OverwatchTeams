@@ -14,8 +14,8 @@ public class ScoreSliderPrefab : MonoBehaviour
 
     public void SetScoreSliderPrefab(float blueScore, float redScore)
     {
-        ColorUtility.TryParseHtmlString("#213B79FF", out var blueColor);
-        ColorUtility.TryParseHtmlString("#7E2D3BFF", out var redColor);
+        ColorUtility.TryParseHtmlString("#77BEF0", out var blueColor);
+        ColorUtility.TryParseHtmlString("#EA5B6F", out var redColor);
         _blueScore.text = string.Format($"{blueScore:0.##}");
         _redScore.text = string.Format($"{redScore:0.##}");
         if (blueScore == 0 && redScore == 0)
