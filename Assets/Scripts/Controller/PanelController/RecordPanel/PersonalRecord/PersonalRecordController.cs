@@ -70,7 +70,7 @@ public class PersonalRecordController : PanelController
         _editFinishButton.gameObject.SetActive(false);
         _editLayer.SetActive(false);
         _isVoiceAvailable.interactable = false;
-        _isClanPlayerToggle.interactable = false;
+        _isClanPlayerToggle.interactable = true;
         _dealerInputField.interactable = false;
         _tankerInputField.interactable = false;
         _healerInputField.interactable = false;
@@ -176,7 +176,7 @@ public class PersonalRecordController : PanelController
                 ? ((int)((float)_playerData.scores.D / 100)).ToString()
                 : string.Format($"{(float)_playerData.scores.D / 100:0.##}");
             _tankerInputField.text = ((float)_playerData.scores.T / 100 % 1 == 0)
-                ? ((int)((float)_playerData.scores.D / 100)).ToString()
+                ? ((int)((float)_playerData.scores.T / 100)).ToString()
                 : string.Format($"{(float)_playerData.scores.T / 100:0.##}");
             _healerInputField.text = ((float)_playerData.scores.H / 100 % 1 == 0)
                 ? ((int)((float)_playerData.scores.H / 100)).ToString()
