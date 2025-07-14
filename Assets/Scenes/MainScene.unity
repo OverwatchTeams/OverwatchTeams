@@ -79041,7 +79041,7 @@ MonoBehaviour:
   _streakButton: {fileID: 7795415185217590672}
   _circularProgressPopup: {fileID: 758105263}
   _toggleAll: {fileID: 1843874207}
-  _isMatchSupport: 0
+  _isMatchSupport: 1
 --- !u!114 &2101901080
 MonoBehaviour:
   m_ObjectHideFlags: 0
