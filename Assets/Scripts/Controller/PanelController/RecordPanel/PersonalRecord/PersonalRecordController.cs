@@ -173,7 +173,7 @@ public class PersonalRecordController : PanelController
             _isVoiceAvailable.SetIsOnWithoutNotify(_playerData.isVoiceAvailable ?? false);
             
             _dealerInputField.text = ((float)_playerData.scores.D / 100 % 1 == 0)
-                ? ((int)((float)_playerData.scores.T / 100)).ToString()
+                ? ((int)((float)_playerData.scores.D / 100)).ToString()
                 : string.Format($"{(float)_playerData.scores.D / 100:0.##}");
             _tankerInputField.text = ((float)_playerData.scores.T / 100 % 1 == 0)
                 ? ((int)((float)_playerData.scores.D / 100)).ToString()

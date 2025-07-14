@@ -65,8 +65,7 @@ public class GameManager : MonoBehaviour
         ScrollRect[] allScrollRects = FindObjectsOfType<ScrollRect>(true);
         foreach (ScrollRect sr in allScrollRects)
             sr.scrollSensitivity = value;
-
-        Debug.Log($"ScrollValueChanged {value}");
+        
         PlayerPrefs.SetFloat("ScrollSpeed", value);
     }
 }
