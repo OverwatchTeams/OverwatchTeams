@@ -15,12 +15,14 @@ public class PlayerButtonPrefab : MonoBehaviour, IPointerClickHandler
     public PlayerData PlayerData => playerData;
     [SerializeField] private GameObject _leftBadge;
     [SerializeField] private GameObject _rightBadge;
-    [SerializeField] private TMP_Text[] _streaks;
+    [SerializeField] private TMP_Text[] _winRates;
     [SerializeField] private TMP_InputField[] _scores;
     [SerializeField] private Image[] _voices;
+    [SerializeField] private GameObject[] _scoreMasks;
+    public GameObject SelectMask;
     
     //MakeTeam - Prediction 관련 프로퍼티
-    [SerializeField] private bool _isRightClickEnabeled = false;
+    [SerializeField] private bool _isRightClickEnabled = false;
     public Action<GameObject> OnRightClick;
     public Role _role;
 
@@ -81,37 +83,39 @@ public class PlayerButtonPrefab : MonoBehaviour, IPointerClickHandler
         {
             _leftBadge.SetActive(true);
             _rightBadge.SetActive(false);
+            gameObject.GetComponent<RawImage>().texture = Resources.Load<Texture>("Images/PlayerButton01");
         }
         else
         {
             _leftBadge.SetActive(false);
             _rightBadge.SetActive(true);
+            gameObject.GetComponent<RawImage>().texture = Resources.Load<Texture>("Images/PlayerButton02");
         }
 
-        foreach (var streak in _streaks)
+        foreach (var _winRate in _winRates)
         {
-            streak.text = "0";   
+            _winRate.text = "0";   
         }
-        foreach (var score in _scores)
+        foreach (var _score in _scores)
         {
-            score.text = "0점";  
+            _score.text = "0점";  
         }
     }
     
-    public void SetBadge(int streak)
+    public void SetBadge(float winRate)
     {
-        if (streak >= 0)
+        if (winRate >= 0)
         {
-            foreach (var _streak in _streaks)
+            foreach (var _winRate in _winRates)
             {
-                _streak.text = streak.ToString();  
+                _winRate.text = winRate.ToString("F0") + "%";  
             }
         }
         else
         {
-            foreach (var _streak in _streaks)
+            foreach (var _winRate in _winRates)
             {
-                _streak.text = streak.ToString();
+                _winRate.text = winRate.ToString("F0") + "%";
             }
         }
 
@@ -155,7 +159,7 @@ public class PlayerButtonPrefab : MonoBehaviour, IPointerClickHandler
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (eventData.button == PointerEventData.InputButton.Right && _isRightClickEnabeled)
+        if (eventData.button == PointerEventData.InputButton.Right && _isRightClickEnabled)
         {
             OnRightClick?.Invoke(gameObject);
         }
@@ -166,5 +170,24 @@ public class PlayerButtonPrefab : MonoBehaviour, IPointerClickHandler
         playerData = newPlayerData;
         _name.text = newPlayerData.player;
         return playerData;
+    }
+
+    public void SetScoreMask(bool isScoreViewable)
+    {
+        if(isScoreViewable)
+        {
+            foreach (var _scoreMask in _scoreMasks)
+            {
+                _scoreMask.SetActive(false);
+            }
+            
+        }
+        else
+        {
+            foreach (var _scoreMask in _scoreMasks)
+            {
+                _scoreMask.SetActive(true);
+            }
+        }
     }
 }

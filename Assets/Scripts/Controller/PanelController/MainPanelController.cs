@@ -14,6 +14,7 @@ public class MainPanelController : PanelController
     [SerializeField] private Button _exitAcceptButton;
     [SerializeField] private Button _settingButton;
     [SerializeField] private ModalWindow _warningPopup;
+    [SerializeField] private Button _dailyMatchButton;
 
     private void Start()
     {
@@ -35,6 +36,7 @@ public class MainPanelController : PanelController
         _exitButton.onClick.RemoveListener(OnClickExitButton);
         _exitAcceptButton.onClick.RemoveListener(OnClickExitAcceptButton);
         _settingButton.onClick.RemoveListener(OnClickSettingButton);
+        _dailyMatchButton.onClick.RemoveListener(OnClickDailyMatchButton);
         
         _teamMakingButton.onClick.AddListener(OnClickTeamMakingButton);
         _gameResultButton.onClick.AddListener(OnClickGameResultButton);
@@ -42,6 +44,7 @@ public class MainPanelController : PanelController
         _exitButton.onClick.AddListener(OnClickExitButton);
         _exitAcceptButton.onClick.AddListener(OnClickExitAcceptButton);
         _settingButton.onClick.AddListener(OnClickSettingButton);
+        _dailyMatchButton.onClick.AddListener(OnClickDailyMatchButton);
     }
 
     private void OnClickTeamMakingButton()
@@ -70,6 +73,16 @@ public class MainPanelController : PanelController
             return;
         }
         OpenPanel("[PopupPanel] RecordsPannel");
+    }
+    
+    private void OnClickDailyMatchButton()
+    {
+        if (DataController.instance._isLoading)
+        {
+            _warningPopup.ShowModalWindow();
+            return;
+        }
+        OpenPanel("[PopupPanel] DailyRecord");
     }
     
     private void OnClickExitButton()

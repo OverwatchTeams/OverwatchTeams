@@ -15,6 +15,7 @@ public class PredictionMatchManager : PanelController
     [SerializeField] private ScoreSliderPrefab _mapScoreSlider;
     [SerializeField] private GameObject _warningDescription;
     [SerializeField] private Button _settingButton;
+    [SerializeField] private GameObject[] _scoreMasks;
     
     //Setting
     [SerializeField] private Slider _voiceSlider;
@@ -112,7 +113,7 @@ public class PredictionMatchManager : PanelController
 
             if (DataController.instance.DailyGameData.leaderBoard.byDay.TryGetValue(day, out var board)
                 && board.winRate.total.TryGetValue(_players[i].PlayerData.player, out var rank))
-                _players[i].SetBadge(rank.streak);
+                _players[i].SetBadge(rank.winRate);
             else
                 _players[i].SetBadge(0);
         }
@@ -327,5 +328,24 @@ public class PredictionMatchManager : PanelController
         PlayerPrefs.SetFloat("Healer", value);
         PlayerPrefs.Save();
         UpdatePrediction(_players, _map, _day);
+    }
+    
+    public void SetScoreMask(bool isScoreViewable)
+    {
+        if(isScoreViewable)
+        {
+            foreach (var _scoreMask in _scoreMasks)
+            {
+                _scoreMask.SetActive(false);
+            }
+            
+        }
+        else
+        {
+            foreach (var _scoreMask in _scoreMasks)
+            {
+                _scoreMask.SetActive(true);
+            }
+        }
     }
 }

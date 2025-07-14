@@ -24,7 +24,7 @@ public class DailyRecordPanelController : PanelController
     
     private string _sortedType;
     private Dictionary<string, int> _playerStreaks;
-    private bool _isMatchSupport = false;
+    [SerializeField] private bool _isMatchSupport = false;
     private string[] _players;
     private bool _isInitialized = false;
     private List<RefinedMatchData> _dailyMatches;
@@ -44,7 +44,11 @@ public class DailyRecordPanelController : PanelController
         _dailyGameData = DataController.instance.DailyGameData;
         _dailyMatches = DataController.instance.RefinedMatches;
         _sortedType = "gap";
-        _toggleAll.isOn = false;
+        if( _isMatchSupport ) _toggleAll.isOn = false;
+        else
+        {
+            _toggleAll.gameObject.SetActive(false);
+        }
         StartCoroutine(GetDailyInform(_dateDropdown.options[_dateDropdown.value].text));
     }
     
@@ -220,7 +224,7 @@ public class DailyRecordPanelController : PanelController
     private IEnumerator GetDailyInform(string date)
     {
         //첫 로딩을 제외한 경우 데이터를 새로 로드
-        if (_isInitialized)
+        if (_isInitialized || !_isMatchSupport)
         {
             _circularProgressPopup.gameObject.SetActive(true);
             yield return StartCoroutine(MatchDataManager.instance.GetDailyMatches(null, matches => _dailyMatches = matches, date));

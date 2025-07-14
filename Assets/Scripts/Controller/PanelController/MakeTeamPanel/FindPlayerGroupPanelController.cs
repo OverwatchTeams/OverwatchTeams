@@ -16,6 +16,7 @@ public class FindPlayerGroupPanelController : FindPlayerPanelController
     [SerializeField] private DailyRecordPanelController _dailyRecordPanel;
     [SerializeField] private PredictionMatchManager _predictionMatchManager;
     [SerializeField] private Button _resetButton;
+    [SerializeField] private Toggle _isScoresViewable;
 
     private PlayerButtonPrefab _selectedButton01;
     private PlayerButtonPrefab _selectedButton02;
@@ -40,6 +41,8 @@ public class FindPlayerGroupPanelController : FindPlayerPanelController
             {
                 obj.gameObject.GetComponent<PlayerButtonPrefab>().SetBadgePosition(false);   
             }
+            _isScoresViewable.onValueChanged.RemoveListener(ScoresViewableToggleChanged);
+            _isScoresViewable.onValueChanged.AddListener(ScoresViewableToggleChanged);
         }
 
         _dailyRecordButton.onClick.RemoveListener(OnClickDailyRecordButton);
@@ -114,12 +117,14 @@ public class FindPlayerGroupPanelController : FindPlayerPanelController
         if (_selectedButton01 == null)
         {
             _selectedButton01 = button.GetComponent<PlayerButtonPrefab>();
+            _selectedButton01.SelectMask.SetActive(true);
             EventSystem.current.SetSelectedGameObject(_selectedButton01.gameObject);
         }
         else if (_selectedButton02 == null)
         {
             PlayerData tempData;
             _selectedButton02 = button.GetComponent<PlayerButtonPrefab>();
+            _selectedButton01.SelectMask.SetActive(false);
             tempData = _selectedButton01.PlayerData;
             _selectedButton01.SetPlayerData(_selectedButton02.PlayerData);
             _selectedButton02.SetPlayerData(tempData);
@@ -145,6 +150,15 @@ public class FindPlayerGroupPanelController : FindPlayerPanelController
         }
         
         StartUpdatePlayerPool();
+    }
+
+    private void ScoresViewableToggleChanged(bool value)
+    {
+        foreach (var player in _playerPool)
+        {
+            player.GetComponent<PlayerButtonPrefab>().SetScoreMask(value);
+        }
+        _predictionMatchManager.SetScoreMask(value);
     }
     
     public void StartUpdatePlayerPool()
