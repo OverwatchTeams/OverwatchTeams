@@ -12,6 +12,7 @@ public class MainPanelController : PanelController
     [SerializeField] private Button _gameRecordButton;
     [SerializeField] private Button _exitButton;
     [SerializeField] private Button _exitAcceptButton;
+    [SerializeField] private Button _settingButton;
     [SerializeField] private ModalWindow _warningPopup;
 
     private void Start()
@@ -33,12 +34,14 @@ public class MainPanelController : PanelController
         _gameRecordButton.onClick.RemoveListener(OnClickGameRecordButton);
         _exitButton.onClick.RemoveListener(OnClickExitButton);
         _exitAcceptButton.onClick.RemoveListener(OnClickExitAcceptButton);
+        _settingButton.onClick.RemoveListener(OnClickSettingButton);
         
         _teamMakingButton.onClick.AddListener(OnClickTeamMakingButton);
         _gameResultButton.onClick.AddListener(OnClickGameResultButton);
         _gameRecordButton.onClick.AddListener(OnClickGameRecordButton);
         _exitButton.onClick.AddListener(OnClickExitButton);
         _exitAcceptButton.onClick.AddListener(OnClickExitAcceptButton);
+        _settingButton.onClick.AddListener(OnClickSettingButton);
     }
 
     private void OnClickTeamMakingButton()
@@ -78,6 +81,11 @@ public class MainPanelController : PanelController
         FitterMessage.Instance.SetDescription("OverwatchTeams를 종료하시겠습니까?");
     }
 
+    private void OnClickSettingButton()
+    {
+        OpenPanel("[PopupPanel] Settings");
+    }
+    
     private void OnClickExitAcceptButton()
     {
         if(FitterMessage.Instance.IsOwner(this.gameObject))

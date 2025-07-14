@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
@@ -28,6 +29,10 @@ public class GameManager : MonoBehaviour
         ApplyFixedAspect(Screen.width);
         lastScreenWidth = Screen.width;
         lastScreenHeight = Screen.height;
+        
+        //스크롤 속도 변경
+        float saved = PlayerPrefs.GetFloat("ScrollSpeed", 15f);
+        UpdateScrollSensitivity(saved);
     }
 
     void Update()
@@ -53,5 +58,15 @@ public class GameManager : MonoBehaviour
     {
         int height = Mathf.RoundToInt(width / targetAspect);
         Screen.SetResolution(width, height, false); // false = 창모드
+    }
+    
+    public void UpdateScrollSensitivity(float value)
+    {
+        ScrollRect[] allScrollRects = FindObjectsOfType<ScrollRect>(true);
+        foreach (ScrollRect sr in allScrollRects)
+            sr.scrollSensitivity = value;
+
+        Debug.Log($"ScrollValueChanged {value}");
+        PlayerPrefs.SetFloat("ScrollSpeed", value);
     }
 }
