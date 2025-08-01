@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class PanelController : MonoBehaviour
 {
     public GameObject[] panels;
+    public GameObject[] nextPanels;
     [SerializeField] private Button[] _returnToDefaultButtons;
     [SerializeField] private Button[] _returnToParentButtons;
     
@@ -33,6 +34,38 @@ public class PanelController : MonoBehaviour
     {
         GameObject resultPanel = null;
         foreach (GameObject panel in panels)
+        {
+            if (closeOthers == true)
+            {
+                // 이름이 일치하는 패널만 활성화 (나머지는 비활성화)
+                if (panel.name == panelName)
+                {
+                    panel.SetActive(true);
+                    resultPanel = panel;
+                }
+                else
+                {
+                    panel.SetActive(false);
+                }
+            }
+            //다른패널은 종료하지 않고, 프로퍼티로 받은 패널 활성화
+            else
+            {
+                if (panel.name == panelName)
+                {
+                    panel.SetActive(true);
+                    resultPanel = panel;
+                }
+            }
+        }
+        return resultPanel;
+    }
+
+    public GameObject OpenNextPanel(string panelName, bool closeOthers = true)
+    {
+        CloseAllPanel();
+        GameObject resultPanel = null;
+        foreach (GameObject panel in nextPanels)
         {
             if (closeOthers == true)
             {

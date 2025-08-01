@@ -255,3 +255,11 @@ public class PlayerURLData
     public List<string> fields;
     public string sortType;
 }
+
+
+public class RequestResponse<T>
+{
+    public long responseCode;
+    public string responseText;
+    public T responseData;
+}
