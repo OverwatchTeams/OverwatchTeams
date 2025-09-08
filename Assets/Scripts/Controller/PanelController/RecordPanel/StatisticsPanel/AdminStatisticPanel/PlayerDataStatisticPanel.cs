@@ -150,7 +150,7 @@ public class PlayerDataStatisticPanel : PanelController
 
     private IEnumerator UpdatePlayerInform()
     {
-        yield return StartCoroutine(DataController.instance.CreatePlayer(
+        yield return StartCoroutine(DataController.instance.CreatePlayerWithLoading(
             result => {
                 if (!result) OpenPanel("[Popup] UpdatePlayerErrorMessage");
             }, _playerData)
@@ -159,7 +159,7 @@ public class PlayerDataStatisticPanel : PanelController
         playerURLData.isClanMember = "false";
         playerURLData.fields = new List<string> { "player", "scores", "isClanMember", "subNames", "dates" };
         playerURLData.sortType = "recent";
-        yield return StartCoroutine(DataController.instance.GetAllPlayerDatas(playerURLData));
+        yield return StartCoroutine(DataController.instance.GetAllPlayerDataWithLoading(playerURLData));
         Initialize();
     }
 

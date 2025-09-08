@@ -7,6 +7,7 @@ public enum Permission
 {
     Admin,
     ClanMaster,
+    ClanAdmin,
     ClanMember,
     None
 }

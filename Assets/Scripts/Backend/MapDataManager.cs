@@ -3,45 +3,40 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MapDataManager : DataManager<MapData>
+public class MapDataManager : MonoBehaviour
 {
     public static MapDataManager instance;
 
-    #region Override Methods
-    protected override void Awake()
+    private string url = "https://51g7o9m3xj.execute-api.ap-northeast-2.amazonaws.com/";
+    
+    private void Awake()
     {
         if (instance == null)
         {
             instance = this;
             url += "Map/";
-            base.Awake();
+            DontDestroyOnLoad(this);
         }
         else
             Destroy(gameObject);
     }
     
-    #region AddData
-    protected override IEnumerator AddDataCoroutine(Action<bool> OnCompleted, MapData data, string requestUrl)
-    {
-        return base.AddDataCoroutine(OnCompleted, data, url + "CreateMap");
-    }
-    #endregion
-    
-    #region DeleteData
-    
-    protected override IEnumerator DeleteDataCoroutine(Action<bool> OnCompleted, int id, string requestUrl)
-    {
-        return base.DeleteDataCoroutine(OnCompleted, id, url +$"DeleteMap?id={id}");
-    }
-    #endregion
-    
-    #region GetAllData
 
-    protected override IEnumerator GetAllDataCoroutine(Action<bool> OnCompleted, Action<MapData[]> OnCompletedDatas, string requestUrl)
+    public IEnumerator GetAllMaps(Action<Response<MapData[]>> OnCompleted)
     {
-        return base.GetAllDataCoroutine(OnCompleted, OnCompletedDatas, url + "GetAllMaps");
+        string requestUrl = url + "GetAllMaps";
+        yield return DataUtility.GetData(OnCompleted, requestUrl);
     }
-    #endregion
-    
-    #endregion
+
+    public IEnumerator CreateMap(Action<Response<string>> OnCompleted, MapData mapData)
+    {
+        string requestUrl = url + "CreateMap";
+        yield return DataUtility.AddData(OnCompleted, requestUrl, mapData);
+    }
+
+    public IEnumerator DeleteMap(Action<Response<string>> OnCompleted, int id)
+    {
+        string requestUrl = url + $"DeleteMap?id={id}";
+        yield return DataUtility.DeleteData(OnCompleted, requestUrl);
+    }
 }

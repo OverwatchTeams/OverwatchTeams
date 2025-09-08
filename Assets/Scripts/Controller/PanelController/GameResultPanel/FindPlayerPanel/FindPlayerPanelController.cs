@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SocialPlatforms.Impl;
 using UnityEngine.UI;
@@ -114,7 +115,7 @@ public class FindPlayerPanelController : PanelController
     
     protected void InitializePanel()
     {
-        _playerNameInputFieldText.text = "";
+        _playerNameInputField.text = "";
         _playerButtons.Clear();
         foreach (Transform child in _playerContainer.transform)
         {
@@ -234,6 +235,12 @@ public class FindPlayerPanelController : PanelController
             }
         }
     }
+
+    public void OnIsClanMemberChanged(bool isClanMember)
+    {
+        _isClanMember = isClanMember;
+        Initialize();
+    }
     
     /// <summary>
     /// 플레이어 선택 시
@@ -241,6 +248,7 @@ public class FindPlayerPanelController : PanelController
     protected virtual void OnClickPlayer(GameObject go)
     {
         OnPlayerClicked?.Invoke(go.GetComponent<PlayerButtonPrefab>().PlayerData.player);
+        Initialize();
     }
     /// <summary>
     /// 플레이어 추가 시

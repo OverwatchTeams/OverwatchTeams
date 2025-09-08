@@ -35,16 +35,19 @@ public class MakeTeamPanelController : PanelController
         _findPlayerGroupPanelController.OnPoolUpdated -= UpdatePlayerPool;
         _findPlayerGroupPanelController.OnPoolUpdated += UpdatePlayerPool;
         
-        StartCoroutine(MatchDataManager.instance.GetLastMatch(result =>
-        {
-            if (result != null)
+        StartCoroutine(MatchDataManager.instance.GetLastMatch(ResponseHandlers.Create<MatchData>(
+            response =>
             {
-                _latestMatchData = result;
-                currentCycle = result.round + 1;
-                beginIndex = result.index + 1;
-            }
-        }));
+                _latestMatchData = response;
+                currentCycle = response.round + 1;
+                beginIndex = response.index + 1;
+            },
+            error => { })));
         Initialize();
+        if (UserData.instance.GetUserPermission() == Permission.ClanAdmin)
+        {
+            _finishButton.gameObject.SetActive(false);
+        }
     }
 
     protected override void Initialize()
@@ -261,7 +264,7 @@ private RefinedMatchData SetRefinedMatchData()
         OpenPanel("[PopupPanel] NetworkingPopup");
         NetworkingMessage.Instance.SetOwner(this.gameObject);
         NetworkingMessage.Instance.SetDescription("저장 중 입니다.");
-        StartCoroutine(DataController.instance.CreateMatch(result =>
+        StartCoroutine(DataController.instance.CreateMatchWithLoading(result =>
         {
             NetworkingMessage.Instance.gameObject.SetActive(false);
             if (result)

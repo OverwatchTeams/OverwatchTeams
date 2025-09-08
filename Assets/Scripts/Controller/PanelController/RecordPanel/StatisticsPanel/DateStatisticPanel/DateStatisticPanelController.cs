@@ -90,7 +90,7 @@ public class DateStatisticPanelController : PanelController
         
         //랭크 불러오기 승률
         int i = 1;
-        yield return StartCoroutine(DataController.instance.GetMainGameDatas(_category, date));
+        yield return StartCoroutine(DataController.instance.GetMainDataWithLoading(_category, date));
         var sortedMaps = DataController.instance.GameDatas.map
             .OrderByDescending(map => map.Value)
             .ToList();

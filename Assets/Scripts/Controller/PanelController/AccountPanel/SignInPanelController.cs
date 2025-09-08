@@ -88,31 +88,19 @@ public class SignInPanelController : PanelController
         string enteredPw = _userPassword.text.Trim();
         
         _circularProgressPopup.gameObject.SetActive(true);
-        StartCoroutine(UserDataManager.instance.GetUserData(response =>
-            {
-                if (response.responseCode == 200)
+        
+        StartCoroutine(UserDataManager.instance.GetUserData(
+            ResponseHandlers.Create<UserData>(
+                data =>
                 {
                     Initialize();
-                    //WIP
                     OpenNextPanel("[Panel] MainMenuPanel");
-                }
-                else if (response.responseCode == 401)
+                },
+                message =>
                 {
-                    if (response.responseText == "Email is invalid")
-                    {
-                        SetErrorMessage("이메일이 존재하지 않습니다.");
-                    }
-                    else if (response.responseText == "Password is invalid")
-                    {
-                        SetErrorMessage("비밀번호가 정확하지 않습니다.");
-                    }
-                }
-                else if (response.responseCode == 404)
-                {
-                    SetErrorMessage($"{response.responseCode} - {response.responseText}");
-                }
-            }
-            , enteredEmail, enteredPw));
+                    SetErrorMessage(message);
+                }),
+            enteredEmail, enteredPw));
         _circularProgressPopup.gameObject.SetActive(false);
     }
 

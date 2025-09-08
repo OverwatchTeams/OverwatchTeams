@@ -6,119 +6,54 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Networking;
 
-public class PlayerDataManager : DataManager<PlayerData>
+public class PlayerDataManager : MonoBehaviour
 {
     public static PlayerDataManager instance;
 
-    #region Override Methods
-    protected override void Awake()
+    private string url = "https://51g7o9m3xj.execute-api.ap-northeast-2.amazonaws.com/";
+    
+    private void Awake()
     {
         if (instance == null)
         {
             instance = this;
             url += "Player/";
-            base.Awake();
+            DontDestroyOnLoad(this);
         }
         else
             Destroy(gameObject);
     }
     
-    #region AddData
-    public override IEnumerator AddData(Action<bool> OnCompleted, PlayerData data)
-    {
-        return base.AddDataCoroutine(OnCompleted, data, url + "CreatePlayer");
-    }
-    #endregion
-    
-    /*#region DeleteData
-    
-    protected override IEnumerator DeleteDataCoroutine(Action<bool> OnCompleted, int id, string requestUrl)
-    {
-        return base.DeleteDataCoroutine(OnCompleted, id, url +$"DeletePlayer?id={id}");
-    }
-    #endregion*/
-    
-    #region GetAllData
-
-    public IEnumerator GetAllPlayers(Action<bool> OnCompleted, Action<PlayerData[]> OnCompletedDatas, PlayerURLData playerURLData)
-    {
-        string detailUrl = "GetAllPlayers";
-        detailUrl += "?ClanMember=" + playerURLData.isClanMember;
-        detailUrl += "&Fields=" + string.Join(",", playerURLData.fields);
-        detailUrl += "&Sort=" + playerURLData.sortType;
-        Debug.Log(detailUrl);
-        return base.GetAllDataCoroutine(OnCompleted, OnCompletedDatas, url + detailUrl);
-    }
-    
-    #endregion
-    #endregion
-    
-    #region GetPlayerData
-
-    public IEnumerator GetPlayerData(Action<bool> OnCompleted, Action<PlayerData> OnCompletedData, string playerName)
-    {
-        return GetPlayerDataCoroutine(OnCompleted, OnCompletedData, url + "GetPlayerData?Name=" + playerName);
-    }
-
-    private IEnumerator GetPlayerDataCoroutine(Action<bool> OnCompleted, Action<PlayerData> OnCompletedData, string requestUrl)
-    {
-        if (string.IsNullOrEmpty(requestUrl))
-        {
-            Debug.LogError("GetPlayerData 요청 URL이 null이거나 비어있습니다.");
-            OnCompleted?.Invoke(false);
-            OnCompletedData?.Invoke(null);
-            yield break;
-        }
-
-        using (UnityWebRequest www = UnityWebRequest.Get(requestUrl))
-        {
-            yield return www.SendWebRequest();
-
-            if (www.result == UnityWebRequest.Result.Success)
-            {
-                string json = www.downloadHandler.text;
-                PlayerData result = JsonConvert.DeserializeObject<PlayerData>(json);
-                Debug.Log($"데이터 조회 성공");
-                OnCompleted?.Invoke(true);
-                OnCompletedData?.Invoke(result);
-            }
-            else
-            {
-                Debug.LogError($"데이터 조회 실패: {www.responseCode} - {www.error}");
-                OnCompleted?.Invoke(false);
-                OnCompletedData?.Invoke(null);
-            }
-        }
-    }
-    #endregion
-    
-    #region UpdatePlayerDocument
-    public IEnumerator UpdatePlayerDocuments(Action<bool> OnCompleted)
-    {
-        yield return StartCoroutine(UpdatePlayerDocumentsCoroutine(OnCompleted));
-    }
-   
-    protected virtual IEnumerator UpdatePlayerDocumentsCoroutine(Action<bool> OnCompleted)
+    public IEnumerator UpdatePlayerDocument(Action<Response<bool>> OnCompleted)
     {
         string requestUrl = url + "UpdatePlayerDocuments";
-        using (UnityWebRequest request = new UnityWebRequest(requestUrl, "POST"))
-        {
-            // DownloadHandler 추가
-            request.downloadHandler = new DownloadHandlerBuffer();
-            
-            yield return request.SendWebRequest();
-
-            if (request.result == UnityWebRequest.Result.Success)
-            {
-                Debug.Log("PlayerDocuments 업데이트 성공: " + request.downloadHandler.text);
-                OnCompleted?.Invoke(true);
-            }
-            else
-            {
-                Debug.LogError("PlayerDocuments 업데이트 실패: " + request.error);
-                OnCompleted?.Invoke(false);
-            }
-        }
+        yield return DataUtility.UpdateData(OnCompleted, requestUrl);
     }
-    #endregion
+    
+    public IEnumerator GetPlayersData(Action<Response<PlayerData[]>> OnCompleted, PlayerURLData playerURLData)
+    {
+        string requestUrl = url + "GetAllPlayers";
+        requestUrl += "?ClanMember=" + playerURLData.isClanMember;
+        requestUrl += "&Fields=" + string.Join(",", playerURLData.fields);
+        requestUrl += "&Sort=" + playerURLData.sortType;
+        yield return DataUtility.GetData(OnCompleted, requestUrl);
+    }
+    
+    public IEnumerator GetPlayerData(Action<Response<PlayerData>> OnCompleted, string playerName)
+    {
+        string requestUrl = url + "GetPlayerData?Name=" + playerName;
+        yield return DataUtility.GetData(OnCompleted, requestUrl);
+    }
+    
+    public IEnumerator CreatePlayer(Action<Response<string>> OnCompleted, PlayerData data)
+    {
+        string requestUrl = url + "CreatePlayer";
+        yield return DataUtility.AddData(OnCompleted, requestUrl, data);
+    }
+    
+    public IEnumerator DeleteMap(Action<Response<string>> OnCompleted, int id)
+    {
+        string requestUrl = url +$"DeletePlayer?id={id}";
+        yield return DataUtility.DeleteData(OnCompleted, requestUrl);
+    }
 }

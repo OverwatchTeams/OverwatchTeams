@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using RainbowArt.CleanFlatUI;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -38,8 +39,7 @@ public class DataController : MonoBehaviour
     private InformMessage _informMessage;
     public bool _isLoading;
     public Action OnCreatePlayerFininshed;
-
-    #region Initiaize
+    
     private void Awake()
     {
         if (instance == null)
@@ -54,18 +54,19 @@ public class DataController : MonoBehaviour
     private void Start()
     {
         _informMessage = new InformMessage();
-        StartCoroutine(InitializeData());
+        StartCoroutine(InitializeDataWithLoading());
+    }
+    
+    private IEnumerator RunCoroutine(IEnumerator coroutine, Action onCompleted)
+    {
+        yield return StartCoroutine(coroutine);
+        onCompleted?.Invoke();
     }
 
     private void StartLoading()
     {
         _isLoading = true;
         _defaultProgressPopup.ShowModalWindow();
-    }
-    private void StartMiniLoading()
-    {
-        _isLoading = true;
-        _miniProgressPopup.gameObject.SetActive(true);
     }
     private void StartCircularLoading()
     {
@@ -77,12 +78,6 @@ public class DataController : MonoBehaviour
     {
         _isLoading = false;
         _defaultProgressPopup.HideModalWindow();
-    }
-    
-    private void FinishMiniLoading()
-    {
-        _isLoading = false;
-        _miniProgressPopup.gameObject.SetActive(false);
     }
 
     private void ErrorOccured(string errorCode)
@@ -97,40 +92,123 @@ public class DataController : MonoBehaviour
         _circularProgressPopup.gameObject.SetActive(false);
     }
 
-    private IEnumerator InitializeData()
+    private IEnumerator GetAllPlayerData()
     {
-        bool isSucceed = false;
-        StartLoading();
-        //맵 데이터 캐싱
+        yield return StartCoroutine(PlayerDataManager.instance.GetPlayersData(
+            ResponseHandlers.Create<PlayerData[]>(OnAllPlayersLoaded, ErrorOccured), SetAllPlayerURLData()));
         _defaultProgressPopup.DescriptionValue = _informMessage.GetRandomMessage();
-        yield return StartCoroutine(PlayerDataManager.instance.GetAllPlayers(success => isSucceed = success, OnClanPlayersLoaded, SetClanPlayerURLData()));
-        if (!isSucceed) ErrorOccured("[901] Get ClanPlayers Failed : InitializeData");
+    }
+
+    private IEnumerator GetAllDropDownDate()
+    {
+        yield return StartCoroutine(MainDataManager.instance.GetDropDownDates(
+            ResponseHandlers.Create<RecordDropdownDate>(OnDropdownDatesLoaded, ErrorOccured)));
         _defaultProgressPopup.DescriptionValue = _informMessage.GetRandomMessage();
-        yield return StartCoroutine(MapDataManager.instance.GetAllData(success => isSucceed = success, OnMapLoaded));
-        if (!isSucceed) ErrorOccured("[902] Get Maps Failed");
+    }
+
+    private IEnumerator GetAllClanPlayerData()
+    {
+        yield return StartCoroutine(PlayerDataManager.instance.GetPlayersData(
+            ResponseHandlers.Create<PlayerData[]>(OnClanPlayersLoaded, ErrorOccured), SetClanPlayerURLData()));
         _defaultProgressPopup.DescriptionValue = _informMessage.GetRandomMessage();
-        yield return StartCoroutine(MapTypeDataManager.instance.GetAllData(success => isSucceed = success, OnMapTypeLoaded));
-        if (!isSucceed) ErrorOccured("[903] Get MapTypes Failed");
+    }
+
+    private IEnumerator GetAllMapData()
+    {
+        yield return StartCoroutine(MapDataManager.instance.GetAllMaps(
+            ResponseHandlers.Create<MapData[]>(OnMapLoaded, ErrorOccured)));
         _defaultProgressPopup.DescriptionValue = _informMessage.GetRandomMessage();
-        yield return StartCoroutine(MainDataManager.instance.GetDropDownDates(success => isSucceed = success, OnDropdownDatesLoaded));
-        if (!isSucceed) ErrorOccured("[917] Get DropdownDate Failed");
-        _defaultProgressPopup.DescriptionValue = _informMessage.GetRandomMessage();
-        yield return StartCoroutine(MatchDataManager.instance.GetDailyMatches(success => isSucceed = success, OnDailyMatchDataLoaded, _latestMatchDate));
-        if (!isSucceed) ErrorOccured("[918] Get DailyMatches Failed");
-        _defaultProgressPopup.DescriptionValue = _informMessage.GetRandomMessage();
-        yield return StartCoroutine(MainDataManager.instance.GetDailyGameData(success => isSucceed = success, OnDailyGameDataLoaded,_latestMatchDate));
-        if (!isSucceed) ErrorOccured("[919] Get MainDailyData Failed");
-        FinishLoading();
     }
     
-    #endregion
+    private IEnumerator GetAllMapTypeData()
+    {
+        yield return StartCoroutine(MapTypeDataManager.instance.GetAllMapTypes(
+            ResponseHandlers.Create<MapTypeData[]>(OnMapTypeLoaded, ErrorOccured)));
+        _defaultProgressPopup.DescriptionValue = _informMessage.GetRandomMessage();
+    }
+
+    private IEnumerator GetDailyMatchData()
+    {
+        _defaultProgressPopup.DescriptionValue = _informMessage.GetRandomMessage();
+        yield return StartCoroutine(MatchDataManager.instance.GetDailyMatches(
+            ResponseHandlers.Create<List<RefinedMatchData>>(OnDailyMatchDataLoaded, ErrorOccured), _latestMatchDate));
+        _defaultProgressPopup.DescriptionValue = _informMessage.GetRandomMessage();
+        yield return StartCoroutine(MainDataManager.instance.GetDailyGameData(
+            ResponseHandlers.Create<DailyGameData>(OnDailyGameDataLoaded, ErrorOccured), _latestMatchDate));
+    }
+
+    private IEnumerator GetStatisticData(string category, string date)
+    {
+        _defaultProgressPopup.DescriptionValue = _informMessage.GetRandomMessage();
+        yield return StartCoroutine(MainDataManager.instance.GetLeaderBoard(
+            ResponseHandlers.Create<WinRateData>(OnLeaderBoardLoaded, ErrorOccured), category, date));
+        _defaultProgressPopup.DescriptionValue = _informMessage.GetRandomMessage();
+        yield return StartCoroutine(MainDataManager.instance.GetGameDatas(
+            ResponseHandlers.Create<GameDatas>(OnGameDataLoaded, ErrorOccured), category, date));
+    }
+
+    private IEnumerator UpdateMainData()
+    {
+        _defaultProgressPopup.DescriptionValue = _informMessage.GetRandomMessage();
+        yield return StartCoroutine(MainDataManager.instance.UpdateMainDocument(
+            ResponseHandlers.Create<bool>(_ => {}, ErrorOccured)));
+    }
+
+    private IEnumerator UpdatePlayerData()
+    {
+        _defaultProgressPopup.DescriptionValue = _informMessage.GetRandomMessage();
+        yield return StartCoroutine(PlayerDataManager.instance.UpdatePlayerDocument(
+            ResponseHandlers.Create<bool>(_ => {}, ErrorOccured)));
+    }
+
+    private IEnumerator UpdateMatchData()
+    {
+        //병렬 실행
+        yield return StartCoroutine(UpdateMainData());
+        yield return StartCoroutine(UpdatePlayerData());
+        yield return StartCoroutine(GetAllDropDownDate());
+        yield return StartCoroutine(GetDailyMatchData());
+    }
+
+    private IEnumerator InitializeData()
+    {
+        //구분 연, 월 캐싱
+        _defaultProgressPopup.DescriptionValue = _informMessage.GetRandomMessage();
+        yield return StartCoroutine(GetAllDropDownDate());
+        
+        //모든 플레이어 정보 캐싱
+        _defaultProgressPopup.DescriptionValue = _informMessage.GetRandomMessage();
+        yield return StartCoroutine(GetAllPlayerData());
+
+        //Permission이 ClanMember이면 위 정보까지만 캐싱
+        if (UserData.instance.GetUserPermission() != Permission.ClanMember)
+        {
+            //클랜 플레이어 정보 캐싱
+            _defaultProgressPopup.DescriptionValue = _informMessage.GetRandomMessage();
+            yield return StartCoroutine(GetAllClanPlayerData());
+            //모든 맵 정보 캐싱
+            _defaultProgressPopup.DescriptionValue = _informMessage.GetRandomMessage();
+            yield return StartCoroutine(GetAllMapData());
+            //모든 맵 타입 정보 캐싱
+            _defaultProgressPopup.DescriptionValue = _informMessage.GetRandomMessage();
+            yield return StartCoroutine(GetAllMapTypeData());
+            //최근 경기 기록 캐싱
+            _defaultProgressPopup.DescriptionValue = _informMessage.GetRandomMessage();
+            yield return StartCoroutine(GetDailyMatchData());
+        }
+    }
     
-    #region MainData
+    public IEnumerator InitializeDataWithLoading()
+    {
+        StartLoading();
+        yield return StartCoroutine(InitializeData());
+        FinishLoading();
+    }
     private void OnLeaderBoardLoaded(WinRateData winRateData)
     {
         _winRateData = winRateData;
     }
-    private void OnGameDatasLoaded(GameDatas gameDatas)
+    private void OnGameDataLoaded(GameDatas gameDatas)
     {
         _gameDatas = gameDatas;
     }
@@ -143,48 +221,18 @@ public class DataController : MonoBehaviour
     {
         _refinedMatches = matches;
     }
-    private IEnumerator UpdateMainData()
-    {
-        bool isSucceed = false;
-        if (_isLoading)
-        {
-            _warningPopup.ShowModalWindow();
-            yield break;
-        }
-        StartMiniLoading();
-        _miniProgressPopup.TextValue = _informMessage.GetRandomMessage();
-        yield return StartCoroutine(MainDataManager.instance.UpdateMainDocument(success => isSucceed = success));
-        FinishMiniLoading();
-        if (!isSucceed) ErrorOccured("[904] Update MainDocument Failed");
-    }
-    public IEnumerator GetMainLeaderBoardData(string category, string date)
-    {
-        bool isSucceed = false;
-        if (_isLoading || (category != "year" && category != "month" && category != "day"))
-        {
-            _warningPopup.ShowModalWindow();
-            yield break;
-        } 
-        StartCircularLoading();
-        yield return StartCoroutine(MainDataManager.instance.GetLeaderBoard(success => isSucceed = success, OnLeaderBoardLoaded, category, date));
-        FinishCircularLoading();
-        if (!isSucceed) ErrorOccured("[905] Get LeaderBoard Failed");
-    }
-    public IEnumerator GetMainGameDatas(string category, string date)
-    {
-        bool isSucceed = false;
-        if (_isLoading || (category != "year" && category != "month" && category != "day"))
-        {
-            _warningPopup.ShowModalWindow();
-            yield break;
-        } 
-        StartCircularLoading();
-        yield return StartCoroutine(MainDataManager.instance.GetGameDatas(success => isSucceed = success, OnGameDatasLoaded, category, date));
-        FinishCircularLoading();
-        if (!isSucceed) ErrorOccured("[906] Get GameDatas Failed");
-    }
     
-    #endregion
+    public IEnumerator GetMainDataWithLoading(string category, string date)
+    {
+        if (_isLoading || (category != "year" && category != "month" && category != "day"))
+        {
+            _warningPopup.ShowModalWindow();
+            yield break;
+        } 
+        StartCircularLoading();
+        yield return StartCoroutine(GetStatisticData(category, date));
+        FinishCircularLoading(); 
+    }
         
     #region PlayerData
 
@@ -195,6 +243,9 @@ public class DataController : MonoBehaviour
     private void OnAllPlayersLoaded(PlayerData[] players)
     {
         _allPlayers = players;
+        _clanPlayers = players
+            .Where(p => p.isClanMember.GetValueOrDefault())
+            .ToArray();
     }
     
     private PlayerURLData SetClanPlayerURLData()
@@ -210,32 +261,14 @@ public class DataController : MonoBehaviour
     {
         PlayerURLData playerURLData = new PlayerURLData();
         playerURLData.isClanMember = "false";
-        playerURLData.fields = new List<string> { "player", "scores", "isClanMember", "subNames", "dates" };
+        playerURLData.fields = new List<string> { "player", "dates", "isClanMember", "subNames"};
         playerURLData.sortType = "recent";
         return playerURLData;
     }
     
-    private IEnumerator UpdatePlayerDatas()
+    public IEnumerator CreatePlayerWithLoading(Action<bool> OnFinished, PlayerData player)
     {
-        bool isSucceed = false;
-        if (_isLoading)
-        {
-            _warningPopup.ShowModalWindow();
-            yield break;
-        }
-        StartMiniLoading();
-        _miniProgressPopup.TextValue = _informMessage.GetRandomMessage();
-        yield return StartCoroutine(PlayerDataManager.instance.UpdatePlayerDocuments(success => isSucceed = success));
-        if (!isSucceed) ErrorOccured("[907] UpdatePlayerDocuments Failed");
-        _miniProgressPopup.TextValue = _informMessage.GetRandomMessage();
-        yield return StartCoroutine(PlayerDataManager.instance.GetAllPlayers(success => isSucceed = success, OnClanPlayersLoaded, SetClanPlayerURLData()));
-        if (!isSucceed) ErrorOccured("[901] Get ClanPlayers Failed : UpdatePlayeDatas");
-        FinishMiniLoading();
-    }
-    
-    public IEnumerator CreatePlayer(Action<bool> OnFinished, PlayerData player)
-    {
-        bool isSucceed = false;
+        bool success = false;
         if (_isLoading)
         {
             _warningPopup.ShowModalWindow();
@@ -243,78 +276,95 @@ public class DataController : MonoBehaviour
             yield break;
         }
         StartCircularLoading();
+        
+        //플레이어 데이터 생성
         _defaultProgressPopup.DescriptionValue = _informMessage.GetRandomMessage();
-        yield return StartCoroutine(PlayerDataManager.instance.AddData(success => isSucceed = success, player));
-        if (!isSucceed) ErrorOccured("[908] Add Data Failed");
-        yield return StartCoroutine(PlayerDataManager.instance.GetAllPlayers(success => isSucceed = success, OnClanPlayersLoaded, SetClanPlayerURLData()));
+        yield return StartCoroutine(PlayerDataManager.instance.CreatePlayer(
+            ResponseHandlers.Create<string>(
+                _ =>
+                {
+                    success = true;
+                }, 
+                error => 
+                { 
+                    ErrorOccured(error); 
+                    success = false; 
+                }), player));
+        
+        //클랜 플레이어 정보 다시 캐싱
+        if (success)
+            yield return StartCoroutine(GetAllClanPlayerData());
+        
         FinishCircularLoading();
-        OnFinished?.Invoke(isSucceed);
+        OnFinished?.Invoke(success);
         OnCreatePlayerFininshed?.Invoke();
-        if (!isSucceed) ErrorOccured("[901] Get ClanPlayers Failed : CreatePlayer");
     }
     
-    public IEnumerator GetClanPlayerDatas()
+    public IEnumerator GetAllClanPlayerDataWithLoading()
     {
-        bool isSucceed = false;
         StartLoading();
+        //클랜 플레이어 정보 캐싱
         _defaultProgressPopup.DescriptionValue = _informMessage.GetRandomMessage();
-        yield return StartCoroutine(PlayerDataManager.instance.GetAllPlayers(success => isSucceed = success, OnClanPlayersLoaded, SetClanPlayerURLData()));
+        yield return StartCoroutine(GetAllClanPlayerData());
         FinishLoading();
-        if (!isSucceed) ErrorOccured("[901] Get ClanPlayers Failed : GetClanPlayerDatas");
     }
     
-    public IEnumerator GetAllPlayerDatas(PlayerURLData playerURLData)
+    public IEnumerator GetAllPlayerDataWithLoading(PlayerURLData playerURLData)
     {
-        bool isSucceed = false;
         StartCircularLoading();
         playerURLData.isClanMember = "false";
-        yield return StartCoroutine(PlayerDataManager.instance.GetAllPlayers(success => isSucceed = success, OnAllPlayersLoaded, SetAllPlayerURLData()));
+        yield return StartCoroutine(GetAllPlayerData());
         FinishCircularLoading();
-        if (!isSucceed) ErrorOccured("[910] Get AllPlayers Failed");
     }
 
-    public IEnumerator GetPlayerData(Action<bool> OnCompleted, Action<PlayerData> OnPlayerLoaded, string playerName)
+    public IEnumerator GetPlayerDataWithLoading(Action<bool> OnCompleted, Action<PlayerData> OnPlayerLoaded, string playerName)
     {
+        bool success = false;
         StartCircularLoading();
-        yield return StartCoroutine(PlayerDataManager.instance.GetPlayerData(OnCompleted, OnPlayerLoaded, playerName));
+        yield return StartCoroutine(PlayerDataManager.instance.GetPlayerData(
+            ResponseHandlers.Create<PlayerData>(data=>
+            {
+                OnPlayerLoaded(data);
+                success = true;
+            }, error =>
+            {
+                ErrorOccured(error);
+                success = false;
+            }), playerName));
         FinishCircularLoading();
+        OnCompleted?.Invoke(success);
     }
     #endregion
     
     #region MatchData
-    public IEnumerator CreateMatch(Action<bool> OnCreated, RefinedMatchData match)
+    public IEnumerator CreateMatchWithLoading(Action<bool> OnCompleted, RefinedMatchData match)
     {
-        bool isSucceed = false;
+        bool success = false;
         if (_isLoading)
         {
             _warningPopup.ShowModalWindow();
-            OnCreated?.Invoke(false);
+            OnCompleted?.Invoke(false);
             yield break;
         }
         StartLoading();
         _defaultProgressPopup.DescriptionValue = _informMessage.GetRandomMessage();
-        yield return StartCoroutine(MatchDataManager.instance.AddData(success => isSucceed = success, match));
-        if (!isSucceed) ErrorOccured("[911] CreateMatch Failed");
-        yield return StartCoroutine(MainDataManager.instance.GetDropDownDates(success => isSucceed = success, OnDropdownDatesLoaded));
-        if (!isSucceed) ErrorOccured("[917] Get DropdownDate Failed");
-        yield return StartCoroutine(MatchDataManager.instance.GetDailyMatches(success => isSucceed = success, OnDailyMatchDataLoaded, _latestMatchDate));
-        if (!isSucceed) ErrorOccured("[918] Get DailyMatches Failed");
-        yield return StartCoroutine(MainDataManager.instance.GetDailyGameData(success => isSucceed = success, OnDailyGameDataLoaded,_latestMatchDate));
-        if (!isSucceed) ErrorOccured("[919] Get MainDailyData Failed");
-        OnCreated?.Invoke(isSucceed);
+        yield return StartCoroutine(MatchDataManager.instance.CreateMatch(
+            ResponseHandlers.Create<int>(
+                _ =>
+                {
+                    success = true;
+                },
+                error =>
+                {
+                    success = false;
+                    ErrorOccured(error);
+                }), match));
+        yield return StartCoroutine(UpdateMatchData());
+        OnCompleted?.Invoke(success);
         FinishLoading();
-        UpdateMainAndPlayerDatas();
     }
-    private void UpdateMainAndPlayerDatas()
-    {
-        StartCoroutine(UpdateMainAndPlayeDatasEnumerator());
-    }
-
-    private IEnumerator UpdateMainAndPlayeDatasEnumerator()
-    {
-        yield return StartCoroutine(UpdateMainData());
-        yield return StartCoroutine(UpdatePlayerDatas());
-    }
+    
+    
     
     #endregion
 
@@ -329,7 +379,7 @@ public class DataController : MonoBehaviour
     }
     public IEnumerator CreateMap(Action<bool> OnFinished, MapData map)
     {
-        bool isSucceed = false;
+        bool success = false;
         if (_isLoading)
         {
             _warningPopup.ShowModalWindow();
@@ -338,16 +388,23 @@ public class DataController : MonoBehaviour
         }
         StartLoading();
         _defaultProgressPopup.DescriptionValue = _informMessage.GetRandomMessage();
-        yield return StartCoroutine(MapDataManager.instance.AddData(success => isSucceed = success, map));
-        if (!isSucceed) ErrorOccured("[912] Add Map Failed");
-        yield return StartCoroutine(MapDataManager.instance.GetAllData(success => isSucceed = success, OnMapLoaded));
-        OnFinished?.Invoke(isSucceed);
+        yield return StartCoroutine(MapDataManager.instance.CreateMap(ResponseHandlers.Create<string>(
+            _ =>
+            {
+                success = true;
+            },
+            error =>
+            {
+                success = false;
+                ErrorOccured(error);
+            }), map));
+        yield return StartCoroutine(GetAllMapData());
+        OnFinished?.Invoke(success);
         FinishLoading();
-        if (!isSucceed) ErrorOccured("[913] Get AllMap Failed");
     }
     public IEnumerator CreateMapType(Action<bool> OnFinished, MapTypeData maptype)
     {
-        bool isSucceed = false;
+        bool success = false;
         if (_isLoading)
         {
             _warningPopup.ShowModalWindow();
@@ -356,12 +413,19 @@ public class DataController : MonoBehaviour
         }
         StartLoading();
         _defaultProgressPopup.DescriptionValue = _informMessage.GetRandomMessage();
-        yield return StartCoroutine(MapTypeDataManager.instance.AddData(success => isSucceed = success, maptype));
-        if (!isSucceed) ErrorOccured("[914] Add MapType Failed");
-        yield return StartCoroutine(MapTypeDataManager.instance.GetAllData(success => isSucceed = success, OnMapTypeLoaded));
-        OnFinished?.Invoke(isSucceed);
+        yield return StartCoroutine(MapTypeDataManager.instance.CreateMapType(ResponseHandlers.Create<string>(
+            _ =>
+            {
+                success = true;
+            },
+            error =>
+            {
+                success = false;
+                ErrorOccured(error);
+            }), maptype));
+        yield return StartCoroutine(GetAllMapTypeData());
+        OnFinished?.Invoke(success);
         FinishLoading();
-        if (!isSucceed) ErrorOccured("[915] Get AllMapType Failed");
     }
     #endregion
 

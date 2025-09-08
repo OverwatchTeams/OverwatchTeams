@@ -9,6 +9,7 @@ using UnityEngine.UI;
 public class PersonalRecordController : PanelController
 {
     [SerializeField] private TMP_Text _playerName;
+    [SerializeField] private GameObject _clanPlayerFilterObject;
     [SerializeField] private Toggle _isClanPlayerToggle;
     [SerializeField] private Toggle _isVoiceAvailable;
     [SerializeField] private GameObject _subNamesContainer;
@@ -74,6 +75,18 @@ public class PersonalRecordController : PanelController
         _isVoiceAvailable.interactable = false;
         _isClanPlayerToggle.interactable = true;
         Initialize();
+        if (UserData.instance.GetUserPermission() == Permission.ClanMember ||
+            UserData.instance.GetUserPermission() == Permission.ClanAdmin)
+        {
+            _clanPlayerFilterObject.SetActive(false);
+        }
+        if (UserData.instance.GetUserPermission() == Permission.ClanAdmin)
+        {
+            _scoreField.SetActive(true);
+            _dealerInputField.interactable = false;
+            _tankerInputField.interactable = false;
+            _healerInputField.interactable = false;
+        }
     }
     
     protected override void Initialize()
@@ -130,11 +143,8 @@ public class PersonalRecordController : PanelController
         _editFinishButton.onClick.RemoveListener(OnFinishEditButtonClicked);
         _editFinishButton.onClick.AddListener(OnFinishEditButtonClicked);
         
-        _isClanPlayerToggle.onValueChanged.RemoveListener(OnClanValueChanged);
-        _isClanPlayerToggle.onValueChanged.AddListener(OnClanValueChanged);
-        
-        _isVoiceAvailable.onValueChanged.RemoveListener(OnVoiceValueChanged);
-        _isVoiceAvailable.onValueChanged.AddListener(OnVoiceValueChanged);
+        _clanPlayerFilterObject.GetComponentInChildren<Toggle>().onValueChanged.RemoveListener(OnClanFilterChanged);
+        _clanPlayerFilterObject.GetComponentInChildren<Toggle>().onValueChanged.AddListener(OnClanFilterChanged);
     }
 
     private void InitializeDefaultInfo()
@@ -261,14 +271,15 @@ public class PersonalRecordController : PanelController
     {
         _playerName.text = playerName;
         StartCoroutine(SetSpecificRecord(playerName));
-        if (UserData.instance.GetUserPermission() == Permission.ClanMember) return;
+        if (UserData.instance.GetUserPermission() == Permission.ClanMember||
+            UserData.instance.GetUserPermission() == Permission.ClanAdmin) return;
         _editButton.gameObject.SetActive(true);
     }
 
     private IEnumerator SetSpecificRecord(string playerName)
     {
         bool isSucceed = false;
-        yield return StartCoroutine(DataController.instance.GetPlayerData(success => isSucceed = success, 
+        yield return StartCoroutine(DataController.instance.GetPlayerDataWithLoading(success => isSucceed = success, 
             playerData => _playerData = playerData, playerName));
         if (!isSucceed)
         {
@@ -396,7 +407,9 @@ public class PersonalRecordController : PanelController
 
         if ((int)(float.Parse(_dealerInputField.text) * 100) != _playerData.scores.D ||
             (int)(float.Parse(_tankerInputField.text) * 100) != _playerData.scores.T ||
-            (int)(float.Parse(_healerInputField.text) * 100) != _playerData.scores.H)
+            (int)(float.Parse(_healerInputField.text) * 100) != _playerData.scores.H ||
+            _isVoiceAvailable.isOn != _playerData.isVoiceAvailable ||
+            _isClanPlayerToggle.isOn != _playerData.isClanMember)
         {
             PlayerData playerData = new PlayerData();
             playerData.player = _playerData.player;
@@ -406,26 +419,21 @@ public class PersonalRecordController : PanelController
             playerData.scores.T = _playerData.scores.T = (int)(float.Parse(_tankerInputField.text) * 100);
             playerData.scores.H = _playerData.scores.H = (int)(float.Parse(_healerInputField.text) * 100);
         
-            playerData.isVoiceAvailable = _playerData.isVoiceAvailable;
-            playerData.isClanMember = _playerData.isClanMember;
+            playerData.isVoiceAvailable = _playerData.isVoiceAvailable = _isVoiceAvailable.isOn;
+            playerData.isClanMember = _playerData.isClanMember = _isClanPlayerToggle.isOn;
             StartCoroutine(ChangePlayerInfo(playerData));
         }
     }
 
     private IEnumerator ChangePlayerInfo(PlayerData playerData)
     {
-        yield return StartCoroutine(DataController.instance.CreatePlayer(null, playerData));
+        yield return StartCoroutine(DataController.instance.CreatePlayerWithLoading(null, playerData));
         ChangePlayer(_playerData.player);
     }
-
-    private void OnVoiceValueChanged(bool value)
-    {
-        _playerData.isVoiceAvailable = value;
-    }
     
-    private void OnClanValueChanged(bool value)
+    private void OnClanFilterChanged(bool value)
     {
-        _playerData.isClanMember = value;
+        _findPlayerPanelController.OnIsClanMemberChanged(value);
     }
 
     private void SetMapWinRateContainer()

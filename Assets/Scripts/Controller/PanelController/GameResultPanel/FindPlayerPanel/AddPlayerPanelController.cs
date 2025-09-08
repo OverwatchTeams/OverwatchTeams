@@ -52,7 +52,7 @@ public class AddPlayerPanelController : PanelController
         OpenPanel("[PopupPanel] NetworkingPopup");
         NetworkingMessage.Instance.SetOwner(this.gameObject);
         NetworkingMessage.Instance.SetDescription("저장 중 입니다.");
-        StartCoroutine(DataController.instance.CreatePlayer(
+        StartCoroutine(DataController.instance.CreatePlayerWithLoading(
             result => {
                 NetworkingMessage.Instance.gameObject.SetActive(false);
                 if (result)

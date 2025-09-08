@@ -15,6 +15,7 @@ public class MainPanelController : PanelController
     [SerializeField] private Button _settingButton;
     [SerializeField] private ModalWindow _warningPopup;
     [SerializeField] private Button _dailyMatchButton;
+    [SerializeField] private GameObject[] _authButtons;
 
     private void Start()
     {
@@ -25,6 +26,13 @@ public class MainPanelController : PanelController
     {
         base.Initialize();
         InitializeListeners();
+        if (UserData.instance.GetUserPermission() == Permission.ClanMember)
+        {
+            foreach (GameObject obj in _authButtons)
+            {
+                obj.SetActive(false);
+            }
+        }
     }
 
     protected override void InitializeListeners()

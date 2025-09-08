@@ -74,7 +74,7 @@ public class PlayerButtonPrefab : MonoBehaviour, IPointerClickHandler
                     }
                     break;
             }
-            StartCoroutine(DataController.instance.CreatePlayer(null, data));
+            StartCoroutine(DataController.instance.CreatePlayerWithLoading(null, data));
         }
     }
     public void SetBadgePosition(bool isLeft)
@@ -94,7 +94,7 @@ public class PlayerButtonPrefab : MonoBehaviour, IPointerClickHandler
 
         foreach (var _winRate in _winRates)
         {
-            _winRate.text = "0";   
+            _winRate.text = "0승 0패";   
         }
         foreach (var _score in _scores)
         {
@@ -102,21 +102,11 @@ public class PlayerButtonPrefab : MonoBehaviour, IPointerClickHandler
         }
     }
     
-    public void SetBadge(float winRate)
+    public void SetBadge(string result)
     {
-        if (winRate >= 0)
+        foreach (var _winRate in _winRates)
         {
-            foreach (var _winRate in _winRates)
-            {
-                _winRate.text = winRate.ToString("F0") + "%";  
-            }
-        }
-        else
-        {
-            foreach (var _winRate in _winRates)
-            {
-                _winRate.text = winRate.ToString("F0") + "%";
-            }
+            _winRate.text = result;
         }
 
         float score = 0.0f;
@@ -188,6 +178,14 @@ public class PlayerButtonPrefab : MonoBehaviour, IPointerClickHandler
             {
                 _scoreMask.SetActive(true);
             }
+        }
+    }
+
+    public void SetInputfieldInteract(bool isInteractable)
+    {
+        foreach (var score in _scores)
+        {
+            score.interactable = isInteractable;
         }
     }
 }

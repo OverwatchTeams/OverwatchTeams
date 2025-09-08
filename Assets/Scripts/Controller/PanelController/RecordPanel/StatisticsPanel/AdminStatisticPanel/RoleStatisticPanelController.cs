@@ -81,7 +81,7 @@ public class RoleStatisticPanelController : PanelController
         //랭크 불러오기 승률
         int index1 = 1;
         int index2 = 1;
-        yield return StartCoroutine(DataController.instance.GetMainLeaderBoardData("month", DataController.instance.RecordDropdownDates.month.First()));
+        yield return StartCoroutine(DataController.instance.GetMainDataWithLoading("month", DataController.instance.RecordDropdownDates.month.First()));
         List<KeyValuePair<string, WinRateData.WinRate.RoleWinRate.SimpleWinRate>> sortedRole = new List<KeyValuePair<string, WinRateData.WinRate.RoleWinRate.SimpleWinRate>>();
         Dictionary<string, WinRateData.WinRate.MapWinRate> recentWinRate = new Dictionary<string, WinRateData.WinRate.MapWinRate>();
         if (_filter == "attendance")
@@ -281,7 +281,7 @@ public class RoleStatisticPanelController : PanelController
                     player.scores.D = (int)(float.Parse(playerScore._dealerScore.text, CultureInfo.InvariantCulture) * 100);
                     player.scores.T = (int)(float.Parse(playerScore._tankerScore.text, CultureInfo.InvariantCulture) * 100);
                     player.scores.H = (int)(float.Parse(playerScore._healerScore.text, CultureInfo.InvariantCulture) * 100);
-                    yield return StartCoroutine(DataController.instance.CreatePlayer(
+                    yield return StartCoroutine(DataController.instance.CreatePlayerWithLoading(
                         result => {
                             if (!result)
                             {
@@ -295,7 +295,7 @@ public class RoleStatisticPanelController : PanelController
             }
         }
         //플레이어 정보 업데이트
-        yield return StartCoroutine(DataController.instance.GetClanPlayerDatas());
+        yield return StartCoroutine(DataController.instance.GetAllClanPlayerDataWithLoading());
         OpenPanel("[PopupPanel] FinishPopup");
         FinishMessage.Instance.SetOwner(this.gameObject);
         FinishMessage.Instance.SetDescription("저장이 완료되었습니다.");

@@ -223,17 +223,42 @@ public class DailyRecordPanelController : PanelController
 
     private IEnumerator GetDailyInform(string date)
     {
+        var matchHandler = new ResponseHandler<List<RefinedMatchData>>(
+            onSuccess: data =>
+            {
+                _dailyMatches = data;
+            },
+            onError: message =>
+            {
+                SetErrorMessage(message);
+            });
+        
+        var statisticHandler = new ResponseHandler<DailyGameData>(
+            onSuccess: data =>
+            {
+                _dailyGameData = data;
+            },
+            onError: message =>
+            {
+                SetErrorMessage(message);
+            });
+        
         //첫 로딩을 제외한 경우 데이터를 새로 로드
         if (_isInitialized || !_isMatchSupport)
         {
             _circularProgressPopup.gameObject.SetActive(true);
-            yield return StartCoroutine(MatchDataManager.instance.GetDailyMatches(null, matches => _dailyMatches = matches, date));
-            yield return StartCoroutine(MainDataManager.instance.GetDailyGameData(null, data => _dailyGameData = data, date));
+            yield return StartCoroutine(MatchDataManager.instance.GetDailyMatches(response => { matchHandler.HandleResponse(response); }, date));
+            yield return StartCoroutine(MainDataManager.instance.GetDailyGameData(response => { statisticHandler.HandleResponse(response); }, date));
             _circularProgressPopup.gameObject.SetActive(false);
         }
         yield return StartCoroutine(UpdateDailyMatchContainer());
         yield return StartCoroutine(UpdateWinRateContainer(date));
         _isInitialized = true;
+    }
+
+    private void SetErrorMessage(string message)
+    {
+        
     }
     
 

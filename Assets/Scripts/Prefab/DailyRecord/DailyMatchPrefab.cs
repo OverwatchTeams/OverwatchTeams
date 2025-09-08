@@ -6,6 +6,7 @@ using UnityEngine;
 public class DailyMatchPrefab : MonoBehaviour
 {
     [SerializeField] private TMP_Text _round;
+    [SerializeField] private TMP_Text _map;
     [SerializeField] private GameObject _blueCrown;
     [SerializeField] private GameObject _redCrown;
     [SerializeField] private List<PlayerButtonPrefab> _playerNames;
@@ -13,6 +14,7 @@ public class DailyMatchPrefab : MonoBehaviour
     public void SetDailyMatchPrefab(RefinedMatchData matchData)
     {
         _round.text = matchData.round.ToString();
+        _map.text = matchData.map;
         if (matchData.winner == WinnerTeam.블루)
         {
             _blueCrown.SetActive(true);

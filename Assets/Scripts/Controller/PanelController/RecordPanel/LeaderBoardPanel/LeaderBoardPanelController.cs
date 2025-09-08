@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Windows.Forms;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -22,6 +23,7 @@ public class LeaderBoardPanelController : PanelController
     [SerializeField] private List<ScrollRect> _scrollRects;
     [SerializeField] private TMP_Text _totalRound;
     [SerializeField] private TMP_Text _minRequiredRound;
+    [SerializeField] private GameObject[] _authObjects;
     
     private void OnEnable()
     {
@@ -35,6 +37,7 @@ public class LeaderBoardPanelController : PanelController
         _monthlyToggle.SetIsOnWithoutNotify(false);
         _yearlyToggle.SetIsOnWithoutNotify(true);
         OnYearlyToggleValueChanged(_yearlyToggle.isOn);
+        InitializeAuthObjects();
     }
 
     protected override void InitializeListeners()
@@ -46,6 +49,24 @@ public class LeaderBoardPanelController : PanelController
         _dateDropdown.onValueChanged.AddListener(OnDropDownValueChanged);
         _yearlyToggle.onValueChanged.AddListener(OnYearlyToggleValueChanged);
         _monthlyToggle.onValueChanged.AddListener(OnMonthlyToggleValueChanged);
+    }
+
+    private void InitializeAuthObjects()
+    {
+        if (UserData.instance.GetUserPermission() == Permission.ClanMember)
+        {
+            foreach (GameObject obj in _authObjects)
+            {
+                if (obj.TryGetComponent(out ScrollRect scrollRect))
+                {
+                    scrollRect.movementType = ScrollRect.MovementType.Clamped;
+                }
+                else
+                {
+                    obj.SetActive(false);
+                }
+            }   
+        }
     }
 
     private IEnumerator SetDropdown(string category)
@@ -93,15 +114,21 @@ public class LeaderBoardPanelController : PanelController
         }
         
         //랭크 불러오기 승률
-        yield return StartCoroutine(DataController.instance.GetMainLeaderBoardData(category, date));
-        yield return StartCoroutine(DataController.instance.GetMainGameDatas(category, date));
+        yield return StartCoroutine(DataController.instance.GetMainDataWithLoading(category, date));
         _minRequiredRound.text = DataController.instance.GameDatas.minRequiredRound.ToString() + "경기";
         _totalRound.text = DataController.instance.GameDatas.totalGames.ToString() + "경기";
         
+
+        var sortedRank = DataController.instance.WinRateData.winRate.total
+            .OrderByDescending(map => map.Value.winRate)
+            .ToList();
+        
         int i = 1;
-        foreach (var rank in DataController.instance.WinRateData.winRate.total)
+        float tempWinRate = 0f;
+        foreach (var rank in sortedRank)
         {
-            if (i > 10) break;
+            if (DataController.instance.GameDatas.minRequiredRound > rank.Value.wins + rank.Value.losses + rank.Value.draws) continue;
+            if(UserData.instance.GetUserPermission() == Permission.ClanMember && i > 10) break;
             GameObject go = Instantiate(_winRateRankPrefab, _winRateRankContainer.transform);
             WinRateRankPrefab rankInfo = go.GetComponent<WinRateRankPrefab>();
             if (i % 2 == 0)
@@ -125,11 +152,21 @@ public class LeaderBoardPanelController : PanelController
                     image.sprite = Resources.Load<Sprite>("Images/backGround_table02");
                 }
             }
-            rankInfo._rank.text = i.ToString();
+            
+            
+            if (i > 1 && Mathf.Approximately(tempWinRate, rank.Value.winRate))
+            {
+                rankInfo._rank.text = (i - 1).ToString();
+            }
+            else
+            {
+                rankInfo._rank.text = i.ToString();
+            }
             rankInfo._name.text = rank.Key;
             rankInfo._win.text = rank.Value.wins.ToString();
             rankInfo._draw.text = rank.Value.draws.ToString();
             rankInfo._lose.text = rank.Value.losses.ToString();
+            tempWinRate = rank.Value.winRate;
             int winRate = (int)Mathf.Round(rank.Value.winRate);
             rankInfo._winRate.text = winRate.ToString();
             i++;
@@ -139,7 +176,8 @@ public class LeaderBoardPanelController : PanelController
         i = 1;
         foreach (var rank in DataController.instance.WinRateData.attendance.total)
         {
-            if (i > 10) break;
+            if (DataController.instance.GameDatas.minRequiredRound > rank.Value.playedGames) break;
+            if(UserData.instance.GetUserPermission() == Permission.ClanMember && i > 10) break;
             GameObject go = Instantiate(_participantRankPrefab, _participantRankContainer.transform);
             ParticipantRankPrefab rankInfo = go.GetComponent<ParticipantRankPrefab>();
             if (i % 2 == 0)

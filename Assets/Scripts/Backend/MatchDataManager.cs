@@ -7,181 +7,59 @@ using UnityEngine;
 using UnityEngine.Networking;
 using Newtonsoft.Json;
 
-public class MatchDataManager : DataManager<MatchData>
+public class MatchDataManager : MonoBehaviour
 {
     public static MatchDataManager instance;
-
-    #region Override Methods
-    protected override void Awake()
+    private string url = "https://51g7o9m3xj.execute-api.ap-northeast-2.amazonaws.com/";
+    private void Awake()
     {
         if (instance == null)
         {
             instance = this;
             url += "Match/";
-            base.Awake();
+            DontDestroyOnLoad(this);
         }
         else
             Destroy(gameObject);
     }
-    
-    #region AddData
-
-    public  IEnumerator AddData(Action<bool> OnCompleted, RefinedMatchData data)
-    {
-        yield return StartCoroutine(AddDataCoroutine(OnCompleted, UnrefineMatchData(data), null));
-    }
-    
-    protected IEnumerator AddDataCoroutine(Action<bool> OnCompleted, MatchData[] data, string requestUrl)
-    {
-        requestUrl = url + "CreateMatch";
-        string json = JsonConvert.SerializeObject(data);
-        Debug.Log("Serialized JSON Data: " + json);
-        byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
-
-        using (UnityWebRequest request = new UnityWebRequest(requestUrl, "POST"))
-        {
-            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-            request.downloadHandler = new DownloadHandlerBuffer();
-            request.SetRequestHeader("Content-Type", "application/json");
-
-            yield return request.SendWebRequest();
-
-            if (request.result == UnityWebRequest.Result.Success)
-            {
-                Debug.Log("데이터 추가 성공: " + request.downloadHandler.text);
-                OnCompleted.Invoke(true);
-            }
-            else
-            {
-                Debug.LogError("데이터 추가 실패: " + request.error);
-                OnCompleted.Invoke(false);
-            }
-        }
-    }
-    #endregion
-    
-    #region DeleteData
-    
-    protected override IEnumerator DeleteDataCoroutine(Action<bool> OnCompleted, int round, string requestUrl)
-    {
-        return base.DeleteDataCoroutine(OnCompleted, round, url +$"DeleteMatch?round={round}");
-    }
-    #endregion
-    
-    #endregion
-    #region GetDataByRounds
-    public IEnumerator GetMatchByRounds(Action<List<RefinedMatchData>> OnCompleted, int page = 1, int limit = 100)
-    {
-        yield return StartCoroutine(GetMatchByRoundsCoroutine(OnCompleted, page, limit));
-    }
-    
-    private IEnumerator GetMatchByRoundsCoroutine(Action<List<RefinedMatchData>> OnCompleted, int page = 1, int limit = 100)
-    {
-        string requestUrl = url + $"GetMatchByRounds?page={page}&limit={limit}";
-
-        using (UnityWebRequest www = UnityWebRequest.Get(requestUrl))
-        {
-            yield return www.SendWebRequest();
-
-            if (www.result == UnityWebRequest.Result.Success)
-            {
-                string json = www.downloadHandler.text;
-                MatchData[] flatMatchData = JsonConvert.DeserializeObject<MatchData[]>(json);
-
-                // 라운드별로 그룹화
-                var grouped = flatMatchData
-                    .GroupBy(m => m.round)
-                    .OrderByDescending(g => g.Key)
-                    .Select(g => g.ToArray())
-                    .ToArray();
-                
-                Debug.Log($"불러온 라운드 수: {grouped.Length}");
-                OnCompleted?.Invoke(RefineAllMatchData(grouped));
-            }
-            else
-            {
-                Debug.LogError($"데이터 불러오기 실패: {www.error}");
-                OnCompleted?.Invoke(null);
-            }
-        }
-    }
-    #endregion
-    
-    #region GetLastData
-
-    public IEnumerator GetLastMatch(Action<MatchData> OnCompleted)
-    {
-        string requestUrl = url + $"GetLastMatch";
-
-        if (string.IsNullOrEmpty(requestUrl))
-        {
-            Debug.LogError("GetLastMatch 요청 URL이 null이거나 비어있습니다.");
-            OnCompleted?.Invoke(null);
-            yield break;
-        }
-
-        using (UnityWebRequest www = UnityWebRequest.Get(requestUrl))
-        {
-            yield return www.SendWebRequest();
-
-            if (www.result == UnityWebRequest.Result.Success)
-            {
-                string json = www.downloadHandler.text;
-                MatchData result = JsonConvert.DeserializeObject<MatchData>(json);
-                Debug.Log($"데이터 조회 성공");
-                OnCompleted?.Invoke(result);
-            }
-            else
-            {
-                Debug.LogError($"데이터 조회 실패: {www.responseCode} - {www.error}");
-                OnCompleted?.Invoke(null);
-            }
-        }
-    }
-    #endregion
-
-    #region GetDailyMatches
-
-    public IEnumerator GetDailyMatches(Action<bool> OnCompleted, Action<List<RefinedMatchData>> OnCompletedDatas, string date)
+    public IEnumerator GetDailyMatches(Action<Response<List<RefinedMatchData>>> OnCompleted, string date)
     {
         string requestUrl = url + $"GetDailyMatches?date=" + date;
-
-        if (string.IsNullOrEmpty(requestUrl))
+        yield return DataUtility.GetData<MatchData[]>(rawResponse =>
         {
-            Debug.LogError("GetDailyMatches 요청 URL이 null이거나 비어있습니다.");
-            OnCompleted?.Invoke(false);
-            OnCompletedDatas?.Invoke(null);
-            yield break;
-        }
+            // MatchData[] → RefinedMatchData 가공
+            List<RefinedMatchData> refinedMatches = RefineAllMatchData(rawResponse.DATA);
 
-        using (UnityWebRequest www = UnityWebRequest.Get(requestUrl))
-        {
-            yield return www.SendWebRequest();
+            var finalResponse = new Response<List<RefinedMatchData>>
+            {
+                isSuccess = rawResponse.isSuccess,
+                statusCode = rawResponse.statusCode,
+                message = rawResponse.message,
+                code = rawResponse.code,
+                DATA = refinedMatches,
+            };
 
-            if (www.result == UnityWebRequest.Result.Success)
-            {
-                string json = www.downloadHandler.text;
-                MatchData[] result = JsonConvert.DeserializeObject<MatchData[]>(json);
-                // 라운드별로 그룹화
-                var grouped = result
-                    .GroupBy(m => m.round)
-                    .OrderByDescending(g => g.Key)
-                    .Select(g => g.ToArray())
-                    .ToArray();
-                
-                Debug.Log($"불러온 라운드 수: {grouped.Length}");
-                OnCompleted?.Invoke(true);
-                OnCompletedDatas?.Invoke(RefineAllMatchData(grouped));
-            }
-            else
-            {
-                Debug.LogError($"데이터 조회 실패: {www.responseCode} - {www.error}");
-                OnCompleted?.Invoke(false);
-                OnCompletedDatas?.Invoke(null);
-            }
-        }
+            OnCompleted?.Invoke(finalResponse);
+        }, requestUrl);
     }
-    #endregion
+    
+    public IEnumerator GetLastMatch(Action<Response<MatchData>> OnCompleted)
+    {
+        string requestUrl = url + $"GetLastMatch";
+        yield return DataUtility.GetData(OnCompleted, requestUrl);
+    }
+    
+    public IEnumerator CreateMatch(Action<Response<int>> OnCompleted, RefinedMatchData data)
+    {
+        string requestUrl = url + "CreateMatch";
+        yield return DataUtility.AddData<MatchData[], int>(OnCompleted, requestUrl, UnrefineMatchData(data));
+    }
+    
+    public IEnumerator DeleteMatchData(Action<Response<string>> OnCompleted, int round)
+    {
+        string requestUrl = url +  $"DeleteMatch?round={round}";
+        yield return DataUtility.DeleteData(OnCompleted, requestUrl);
+    }
     
     #region MatchData Exchanger
     
@@ -253,10 +131,15 @@ public class MatchDataManager : DataManager<MatchData>
     /// </summary>
     /// <param name="groupedData"></param>
     /// <returns></returns>
-    public List<RefinedMatchData> RefineAllMatchData(MatchData[][] groupedData)
+    public List<RefinedMatchData> RefineAllMatchData(MatchData[] matches)
     {
+        var matchGroup = matches
+            .GroupBy(m => m.round)
+            .OrderByDescending(g => g.Key)
+            .Select(g => g.ToArray())
+            .ToArray();
         var result = new List<RefinedMatchData>();
-        foreach (var group in groupedData)
+        foreach (var group in matchGroup)
         {
             var refined = RefineMatchData(group);
             if (refined != null)
@@ -358,41 +241,6 @@ public class MatchDataManager : DataManager<MatchData>
 
         return result.ToArray();
     }
-    
-    #endregion
-    
-    #region 상속받았지만 사용하지 않는 함수
-    /// <summary>
-    /// 사용하지 않는 함수입니다. 
-    /// </summary>
-    public override IEnumerator AddData(Action<bool> OnCompleted, MatchData data)
-    {
-        throw new System.NotImplementedException("이 클래스에서 사용할 수 없는 함수 입니다.");
-    }
-    /// <summary>
-    /// 사용하지 않는 함수입니다.
-    /// </summary>
-    protected override IEnumerator AddDataCoroutine(Action<bool> OnCompleted, MatchData data, string requestUrl)
-    {
-        throw new System.NotImplementedException("이 클래스에서 사용할 수 없는 함수 입니다.");
-    }
-    
-    /// <summary>
-    /// 사용하지 않는 함수입니다.
-    /// </summary>
-    public override IEnumerator GetAllData(Action<bool> OnCompleted, Action<MatchData[]> OnCompletedDatas)
-    {
-        throw new System.NotImplementedException("이 클래스에서 사용할 수 없는 함수 입니다."); 
-    }
-
-    /// <summary>
-    /// 사용하지 않는 함수입니다.
-    /// </summary>
-    protected override IEnumerator GetAllDataCoroutine(Action<bool> OnCompleted, Action<MatchData[]> OnCompletedDatas, string requestUrl)
-    {
-        throw new System.NotImplementedException("이 클래스에서 사용할 수 없는 함수 입니다."); 
-    }
-    
     
     #endregion
 }

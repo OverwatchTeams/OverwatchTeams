@@ -47,9 +47,18 @@ public class FindPlayerGroupPanelController : FindPlayerPanelController
 
         _dailyRecordButton.onClick.RemoveListener(OnClickDailyRecordButton);
         _dailyRecordButton.onClick.AddListener(OnClickDailyRecordButton);
+        DataController.instance.OnCreatePlayerFininshed -= StartUpdatePlayerPool;
         DataController.instance.OnCreatePlayerFininshed += StartUpdatePlayerPool;
+        Debug.Log("Enable StartUpdatePlayerPool");
         _resetButton.onClick.RemoveListener(OnClickResetButton);
         _resetButton.onClick.AddListener(OnClickResetButton);
+        if (UserData.instance.GetUserPermission() == Permission.ClanAdmin)
+        {
+            foreach (var player in _playerPool)
+            {
+                player.GetComponent<PlayerButtonPrefab>().SetInputfieldInteract(false);
+            }
+        }
     }
 
     private void OnDisable()

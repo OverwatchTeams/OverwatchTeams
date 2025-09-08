@@ -3,46 +3,38 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MapTypeDataManager : DataManager<MapTypeData>
+public class MapTypeDataManager : MonoBehaviour
 {
     public static MapTypeDataManager instance;
-
-    #region Override Methods
-    protected override void Awake()
+    
+    private string url = "https://51g7o9m3xj.execute-api.ap-northeast-2.amazonaws.com/";
+    
+    private void Awake()
     {
         if (instance == null)
         {
             instance = this;
             url += "MapType/";
-            base.Awake();
+            DontDestroyOnLoad(this);
         }
         else
             Destroy(gameObject);
     }
-    
-    #region AddData
-    protected override IEnumerator AddDataCoroutine(Action<bool> OnCompleted, MapTypeData data, string requestUrl)
+    public IEnumerator GetAllMapTypes(Action<Response<MapTypeData[]>> OnCompleted)
     {
-        Debug.Log($"name : {data.name}, index : {data.index}");
-        return base.AddDataCoroutine(OnCompleted, data, url + "CreateMapType");
+        string requestUrl = url + "GetAllMapTypes";
+        yield return DataUtility.GetData(OnCompleted, requestUrl);
     }
-    #endregion
     
-    #region DeleteData
-    
-    protected override IEnumerator DeleteDataCoroutine(Action<bool> OnCompleted, int id, string requestUrl)
+    public IEnumerator CreateMapType(Action<Response<string>> OnCompleted, MapTypeData mapTypeData)
     {
-        return base.DeleteDataCoroutine(OnCompleted, id, url +$"DeleteMapType?id={id}");
+        string requestUrl = url + "CreateMapType";
+        yield return DataUtility.AddData(OnCompleted, requestUrl, mapTypeData);
     }
-    #endregion
     
-    #region GetAllData
-
-    protected override IEnumerator GetAllDataCoroutine(Action<bool> OnCompleted, Action<MapTypeData[]> OnCompletedDatas, string requestUrl)
+    public IEnumerator DeleteMap(Action<Response<string>> OnCompleted, int id)
     {
-        return base.GetAllDataCoroutine(OnCompleted, OnCompletedDatas, url + "GetAllMapTypes");
+        string requestUrl = url + $"DeleteMapType?id={id}";
+        yield return DataUtility.DeleteData(OnCompleted, requestUrl);
     }
-    #endregion
-    
-    #endregion
 }

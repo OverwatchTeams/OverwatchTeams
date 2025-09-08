@@ -113,9 +113,9 @@ public class PredictionMatchManager : PanelController
 
             if (DataController.instance.DailyGameData.leaderBoard.byDay.TryGetValue(day, out var board)
                 && board.winRate.total.TryGetValue(_players[i].PlayerData.player, out var rank))
-                _players[i].SetBadge(rank.winRate);
+                _players[i].SetBadge($"{rank.wins}승 {rank.losses}패");
             else
-                _players[i].SetBadge(0);
+                _players[i].SetBadge("0승 0패");
         }
 
         foreach (var p in _players)
